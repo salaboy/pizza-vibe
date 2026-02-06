@@ -32,3 +32,19 @@ type CookedItem struct {
 	Quantity    int    `json:"quantity"`
 	CookingTime int    `json:"cookingTime"` // in seconds
 }
+
+// AgentCookRequest represents the request body for the cooking-agent.
+// It contains a list of pizza names to be cooked.
+type AgentCookRequest struct {
+	Pizzas []string `json:"pizzas"`
+}
+
+// CookingUpdate represents a streaming update from the cooking agent.
+// These updates inform the client about the current action being performed.
+type CookingUpdate struct {
+	Type      string `json:"type"`      // Type of update: "action", "progress", "result", "partial"
+	Action    string `json:"action"`    // The action being performed
+	Message   string `json:"message"`   // Human-readable message describing the update
+	ToolName  string `json:"toolName"`  // The name of the tool being executed (if applicable)
+	ToolInput string `json:"toolInput"` // The input to the tool (if applicable)
+}

@@ -286,3 +286,68 @@ Requirements:
     - Implement a section in the inventory page to add more quantity to the items
 
 Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+## Improve oven service
+
+/ralph-loop:ralph-loop "Change the oven service behavior to lock oven based on time TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the oven/ directory
+- Make changes in code and tests to accept the username that is reserved the oven, make sure that this is included in the data model
+- When an oven is reserved it will remain reserved for a random amount of time between 5 and 20 seconds and then it will be released
+- Remove the endpoint to manually release an oven
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+## Connect Kitchen Service with Cooking Agent
+
+/ralph-loop:ralph-loop "Change the kitchen service to connect with cooking agent using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the kitchen/ directory
+- Make changes in code and tests to send a request to the cooking-agent for every pizza in the order
+  - Remove the logic to wait for every pizza in the order.
+  - Check the agents/cooking-agent directory to understand the data types for the request
+  - For each pizza cooked by the agent, emit an event to the store service
+  - When all the pizzas are cooked still send the DONE event 
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+## The Kitchen Service should receive Cooking Agent stream of updates and send them to the store
+
+/ralph-loop:ralph-loop "Change the kitchen service to connect with cooking agent using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the kitchen/ directory
+- Call the cooking agent service to the cook/stream endpoint
+- Make changes in code and tests to get the cooking agent stream of updates and send them to the store
+- For each pizza cooked by the agent, emit an event for every streamed update from the cooking agent.
+- When all the pizzas are cooked still send the DONE event
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"

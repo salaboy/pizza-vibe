@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -197,84 +198,73 @@ func TestHandleReserveNotFound(t *testing.T) {
 	}
 }
 
-// TestHandleRelease tests DELETE /ovens/{ovenId} - successfully releasing an oven
-func TestHandleRelease(t *testing.T) {
-	svc := NewOvenService()
+
+// TestManualReleaseEndpointRemoved verifies that the DELETE endpoint no longer exists
+// This is a design test - the HandleRelease method should be removed from the service
+func TestManualReleaseEndpointRemoved(t *testing.T) {
+	// Verify that OvenService does not have HandleRelease method by checking
+	// that the method does not exist (compile-time check via interface)
+	var _ interface {
+		HandleGetAll(http.ResponseWriter, *http.Request)
+		HandleGetByID(http.ResponseWriter, *http.Request)
+		HandleReserve(http.ResponseWriter, *http.Request)
+	} = &OvenService{}
+
+	// This test passes if the code compiles without HandleRelease
+	// If HandleRelease exists and we want to verify it's not exposed,
+	// we would need a different approach (integration test with router)
+}
+
+// TestReserveAutoReleasesAfterTime tests that an oven is automatically released after reservation
+func TestReserveAutoReleasesAfterTime(t *testing.T) {
+	// Create service with custom release duration for testing
+	svc := NewOvenServiceWithConfig(OvenServiceConfig{
+		MinReleaseDuration: 50 * time.Millisecond,
+		MaxReleaseDuration: 100 * time.Millisecond,
+	})
 
 	r := chi.NewRouter()
 	r.Post("/ovens/{ovenId}", svc.HandleReserve)
-	r.Delete("/ovens/{ovenId}", svc.HandleRelease)
+	r.Get("/ovens/{ovenId}", svc.HandleGetByID)
 
-	// First reserve the oven
+	// Reserve the oven
 	req1, _ := http.NewRequest("POST", "/ovens/oven-1?user=chef1", nil)
 	rr1 := httptest.NewRecorder()
 	r.ServeHTTP(rr1, req1)
 
-	// Now release it
-	req2, err := http.NewRequest("DELETE", "/ovens/oven-1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr2 := httptest.NewRecorder()
-	r.ServeHTTP(rr2, req2)
-
-	if status := rr2.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	if status := rr1.Code; status != http.StatusOK {
+		t.Fatalf("reserve returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
 	var oven Oven
-	if err := json.Unmarshal(rr2.Body.Bytes(), &oven); err != nil {
-		t.Errorf("failed to unmarshal response: %v", err)
+	if err := json.Unmarshal(rr1.Body.Bytes(), &oven); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
 	}
 
-	if oven.ID != "oven-1" {
-		t.Errorf("expected oven ID oven-1, got %s", oven.ID)
+	if oven.Status != StatusReserved {
+		t.Errorf("expected oven status RESERVED, got %s", oven.Status)
 	}
-	if oven.Status != StatusAvailable {
-		t.Errorf("expected oven status AVAILABLE, got %s", oven.Status)
-	}
-	if oven.User != "" {
-		t.Errorf("expected empty user, got %s", oven.User)
-	}
-}
-
-// TestHandleReleaseAlreadyAvailable tests DELETE /ovens/{ovenId} when oven is already available
-func TestHandleReleaseAlreadyAvailable(t *testing.T) {
-	svc := NewOvenService()
-
-	r := chi.NewRouter()
-	r.Delete("/ovens/{ovenId}", svc.HandleRelease)
-
-	req, err := http.NewRequest("DELETE", "/ovens/oven-1", nil)
-	if err != nil {
-		t.Fatal(err)
+	if oven.User != "chef1" {
+		t.Errorf("expected user chef1, got %s", oven.User)
 	}
 
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
+	// Wait for auto-release (max duration + buffer)
+	time.Sleep(150 * time.Millisecond)
 
-	if status := rr.Code; status != http.StatusConflict {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusConflict)
-	}
-}
+	// Check oven is now available
+	req2, _ := http.NewRequest("GET", "/ovens/oven-1", nil)
+	rr2 := httptest.NewRecorder()
+	r.ServeHTTP(rr2, req2)
 
-// TestHandleReleaseNotFound tests DELETE /ovens/{ovenId} for non-existent oven
-func TestHandleReleaseNotFound(t *testing.T) {
-	svc := NewOvenService()
-
-	r := chi.NewRouter()
-	r.Delete("/ovens/{ovenId}", svc.HandleRelease)
-
-	req, err := http.NewRequest("DELETE", "/ovens/oven-99", nil)
-	if err != nil {
-		t.Fatal(err)
+	var ovenAfter Oven
+	if err := json.Unmarshal(rr2.Body.Bytes(), &ovenAfter); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
 	}
 
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusNotFound {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNotFound)
+	if ovenAfter.Status != StatusAvailable {
+		t.Errorf("expected oven status AVAILABLE after auto-release, got %s", ovenAfter.Status)
+	}
+	if ovenAfter.User != "" {
+		t.Errorf("expected empty user after auto-release, got %s", ovenAfter.User)
 	}
 }

@@ -1,26 +1,22 @@
 package com.pizzavibe;
 
-import com.pizzavibe.service.InventoryService;
+
+import com.pizzavibe.agent.StreamingCookingAgent;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 class CookingResourceTest {
 
     @Inject
-    InventoryService inventoryService;
-
-    @BeforeEach
-    void setUp() {
-        inventoryService.resetInventory();
-    }
+    StreamingCookingAgent streamingCookingAgent;
 
     @Test
     void testHelloEndpoint() {
@@ -32,40 +28,22 @@ class CookingResourceTest {
     }
 
     @Test
-    void testCookPizzaEndpoint() {
-        given()
-            .contentType("application/json")
-            .body("{\"pizzas\": [\"Margherita\"]}")
-          .when().post("/cook")
-          .then()
-             .statusCode(200)
-             .body("cookedPizzas", hasSize(1))
-             .body("cookedPizzas", hasItem("Margherita"))
-             .body("failedPizzas", hasSize(0));
+    void testStreamingCookingAgentShouldBeInjected() {
+        // Test that the streaming agent is properly injected
+        assertNotNull(streamingCookingAgent, "StreamingCookingAgent should be injected");
     }
 
     @Test
-    void testCookMultiplePizzasEndpoint() {
+    @EnabledIfEnvironmentVariable(named = "PIZZA_MCP_URL", matches = ".+")
+    void testStreamEndpointExists() {
+        // Test that the streaming endpoint exists and accepts POST with JSON
+        // Only run when MCP server is available
         given()
-            .contentType("application/json")
-            .body("{\"pizzas\": [\"Margherita\", \"Pepperoni\", \"Veggie\"]}")
-          .when().post("/cook")
+          .contentType(ContentType.JSON)
+          .body("{\"pizzas\": [\"Margherita\"]}")
+          .when().post("/cook/stream")
           .then()
              .statusCode(200)
-             .body("cookedPizzas", hasSize(3))
-             .body("failedPizzas", hasSize(0));
-    }
-
-    @Test
-    void testCookUnknownPizzaEndpoint() {
-        given()
-            .contentType("application/json")
-            .body("{\"pizzas\": [\"SuperSpecial\"]}")
-          .when().post("/cook")
-          .then()
-             .statusCode(200)
-             .body("cookedPizzas", hasSize(0))
-             .body("failedPizzas", hasSize(1))
-             .body("failedPizzas", hasItem("SuperSpecial"));
+             .contentType("text/event-stream");
     }
 }

@@ -1,14 +1,15 @@
 package com.pizzavibe.agent;
 
-import dev.langchain4j.agentic.Agent;
-import dev.langchain4j.agentic.declarative.LoopAgent;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import io.quarkiverse.langchain4j.runtime.aiservice.ChatEvent;
 import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
+import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
+import dev.langchain4j.agentic.Agent;
 
 @ApplicationScoped
-public interface CookingAgent {
+public interface StreamingCookingAgent {
 
     @SystemMessage("""
         You are a pizza cooking agent. Your job is to cook pizzas using the available ingredients and ovens.
@@ -35,5 +36,5 @@ public interface CookingAgent {
         """)
     @Agent("Cook pizzas based on requests.")
     @McpToolBox("pizza-mcp")
-    String cook(@UserMessage String request);
+    Multi<ChatEvent> cookStream(@UserMessage String request);
 }
