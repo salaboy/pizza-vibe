@@ -18,23 +18,25 @@ export default function KitchenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch('/api/kitchen/orders');
-        if (!response.ok) {
-          throw new Error('Failed to fetch orders');
-        }
-        const data = await response.json();
-        setOrders(data.orders || []);
-        setLoading(false);
-      } catch (err) {
-        setError('Error loading kitchen orders');
-        setLoading(false);
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/kitchen/orders');
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
       }
-    };
+      const data = await response.json();
+      setOrders(data.orders || []);
+      setLoading(false);
+    } catch (err) {
+      setError('Error loading kitchen orders');
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {

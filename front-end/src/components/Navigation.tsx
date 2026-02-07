@@ -12,6 +12,7 @@ export default function Navigation() {
     { href: '/delivery', label: 'Delivery' },
     { href: '/inventory', label: 'Inventory' },
     { href: '/oven', label: 'Ovens' },
+    { href: '/bikes', label: 'Bikes' },
     { href: '/management', label: 'Management' },
   ];
 

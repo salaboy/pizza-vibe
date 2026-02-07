@@ -31,6 +31,8 @@ export default function OvenPage() {
 
   useEffect(() => {
     fetchOvens();
+    const interval = setInterval(fetchOvens, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleReserve = async (ovenId: string) => {

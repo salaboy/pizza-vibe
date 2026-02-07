@@ -374,3 +374,33 @@ Requirements:
   - Also keep the websocket open even when the user changes pages
 
 Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+
+## The Bikes service
+
+/ralph-loop:ralph-loop "Create the bikes service to reserve bikes using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Following the structure of the inventory service, create a bikes service to reserve bikes
+- The bikes service should expose the following endpoints:
+    - GET endpoint /bikes to return all the available bikes and their status
+    - GET endpoint /bikes/{bikeId} return the status of the bike
+    - POST endpoint /bikes/{bikeId} reserves and bike
+- To reserve a bike, the bike must be available and the user should be sent as a parameter
+- Each time that an operation is executed on a bike, the bike status should be updated and a timestamp should be recorded
+- The bikes service should return the following bike status:
+    - AVAILABLE: the bike is available to be reserved
+- When the bike is reserved it will automatically free itself after a random amount of time between 10 and 20 seconds
+- While the bike is reserved it should emit events to the store service reporting that the bike is on route to deliver a pizza order
+
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"

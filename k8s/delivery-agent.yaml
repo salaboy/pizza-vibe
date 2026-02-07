@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delivery-agent
+  labels:
+    app: delivery-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: delivery-agent
+  template:
+    metadata:
+      labels:
+        app: delivery-agent
+    spec:
+      containers:
+        - name: delivery-agent
+          image: pizza-vibe-delivery-agent:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8089
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            - name: BIKES_SERVICE_URL
+              value: "http://bikes:8088"
+            - name: BIKES_SKILL_SCRIPTS_PATH
+              value: "/deployments/skills/bikes/scripts"
+          livenessProbe:
+            httpGet:
+              path: /q/health
+              port: 8089
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /q/health
+              port: 8089
+            initialDelaySeconds: 15
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: delivery-agent
+  labels:
+    app: delivery-agent
+spec:
+  selector:
+    app: delivery-agent
+  ports:
+    - port: 8089
+      targetPort: 8089
+      protocol: TCP
+  type: ClusterIP

@@ -9,6 +9,7 @@ services:
       - STORE_SERVICE_URL=http://store:8080
       - OVEN_SERVICE_URL=http://oven:8085
       - INVENTORY_SERVICE_URL=http://inventory:8084
+      - BIKES_SERVICE_URL=http://bikes:8088
     networks:
       - pizza-network
     depends_on:
@@ -101,6 +102,22 @@ services:
       timeout: 10s
       retries: 3
 
+  bikes:
+    build:
+      context: .
+      dockerfile: bikes/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - PORT=8088
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   pizza-mcp:
     build:
       context: ./agents/pizza-mcp
@@ -131,6 +148,24 @@ services:
       - pizza-network
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8087/q/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  delivery-agent:
+    build:
+      context: .
+      dockerfile: agents/delivery-agent/src/main/docker/Dockerfile.jvm
+    ports:
+      - "8089:8089"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - BIKES_SERVICE_URL=http://bikes:8088
+      - BIKES_SKILL_SCRIPTS_PATH=/deployments/skills/bikes/scripts
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8089/q/health"]
       interval: 30s
       timeout: 10s
       retries: 3

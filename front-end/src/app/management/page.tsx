@@ -74,6 +74,11 @@ export default function ManagementPage() {
 
     checkServices();
     fetchOrders();
+    const interval = setInterval(() => {
+      checkServices();
+      fetchOrders();
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOrderClick = async (orderId: string) => {

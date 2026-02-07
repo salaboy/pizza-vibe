@@ -30,6 +30,8 @@ export default function InventoryPage() {
 
   useEffect(() => {
     fetchInventory();
+    const interval = setInterval(fetchInventory, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAcquire = async (itemName: string) => {

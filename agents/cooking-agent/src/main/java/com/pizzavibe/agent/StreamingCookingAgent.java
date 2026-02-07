@@ -1,5 +1,7 @@
 package com.pizzavibe.agent;
 
+import dev.langchain4j.agentic.declarative.ParallelAgent;
+import dev.langchain4j.agentic.declarative.SequenceAgent;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.runtime.aiservice.ChatEvent;

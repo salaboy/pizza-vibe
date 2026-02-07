@@ -17,6 +17,7 @@ describe('Navigation', () => {
     expect(screen.getByRole('link', { name: /order/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /kitchen/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /delivery/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /bikes/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /management/i })).toBeInTheDocument();
   });
 
@@ -25,6 +26,7 @@ describe('Navigation', () => {
     expect(screen.getByRole('link', { name: /order/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: /kitchen/i })).toHaveAttribute('href', '/kitchen');
     expect(screen.getByRole('link', { name: /delivery/i })).toHaveAttribute('href', '/delivery');
+    expect(screen.getByRole('link', { name: /bikes/i })).toHaveAttribute('href', '/bikes');
     expect(screen.getByRole('link', { name: /management/i })).toHaveAttribute('href', '/management');
   });
 
