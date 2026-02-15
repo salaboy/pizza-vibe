@@ -139,3 +139,27 @@ Requirements:
 
 
 Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+## Create a new store management agent
+
+Make the cooking-agent stream updates while cooking using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look at the code in agents/cooking-agent
+- Always look for references:
+    - https://quarkus.io/quarkus-workshop-langchain4j/
+    - https://quarkus.io/guides/langchain4j
+- Create a new store-mgmt-agent directory inside the agents/ directory to contain all the agent code.
+- Using the quarkus @Sequential annotation, the store management agent should use the cooking-agent and delivery agent to manager store orders.
+- The store management agent should expose a REST endpoint to manage store orders.
+
+
+Output <promise>DONE</promise> when all tests green.
