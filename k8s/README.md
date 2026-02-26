@@ -71,7 +71,22 @@ Verify PostgreSQL is running:
 kubectl get pods -l app.kubernetes.io/name=postgresql
 ```
 
-## 4. Build the Agent Services (Maven)
+## 4. Clone and Build `quarkus-agentic-dapr`
+
+The `store-mgmt-agent` depends on the [quarkus-agentic-dapr](https://github.com/salaboy/quarkus-agentic-dapr) library which is not published to a public Maven repository. You must clone and install it locally before building the agents:
+
+```bash
+git clone https://github.com/salaboy/quarkus-agentic-dapr .deps/quarkus-agentic-dapr
+cd .deps/quarkus-agentic-dapr && mvn clean install -DskipTests && cd ../..
+```
+
+If you have already cloned it, pull the latest changes and rebuild:
+
+```bash
+cd .deps/quarkus-agentic-dapr && git pull && mvn clean install -DskipTests && cd ../..
+```
+
+## 5. Build the Agent Services (Maven)
 
 The Java/Quarkus agent services under `agents/` must be packaged before building their Docker images. From the project root, run:
 
@@ -82,7 +97,7 @@ cd agents/delivery-agent && ./mvnw clean package -DskipTests && cd ../..
 cd agents/store-mgmt-agent && ./mvnw clean package -DskipTests && cd ../..
 ```
 
-## 5. Build and Load Container Images
+## 6. Build and Load Container Images
 
 Since KIND runs containers inside Docker, you need to build the images locally and then load them into the KIND cluster.
 
@@ -119,7 +134,7 @@ kind load docker-image pizza-vibe-delivery-agent:latest --name pizza-vibe
 kind load docker-image pizza-vibe-store-mgmt-agent:latest --name pizza-vibe
 ```
 
-## 6. Create Secrets
+## 7. Create Secrets
 
 The `delivery-agent` requires an Anthropic API key. Create the secret before deploying:
 
@@ -127,7 +142,7 @@ The `delivery-agent` requires an Anthropic API key. Create the secret before dep
 kubectl create secret generic anthropic-secret --from-literal=api-key=<YOUR_ANTHROPIC_API_KEY>
 ```
 
-## 7. Deploy the Application
+## 8. Deploy the Application
 
 Apply all Kubernetes manifests:
 
@@ -141,7 +156,7 @@ Verify all pods are running:
 kubectl get pods
 ```
 
-## 8. Access the Application
+## 9. Access the Application
 
 Port-forward the store service to access it from your browser:
 

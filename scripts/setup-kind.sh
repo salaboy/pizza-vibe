@@ -55,9 +55,24 @@ kubectl get pods -l app.kubernetes.io/name=postgresql
 echo ""
 
 # -------------------------------------------------------
-# 4. Build agent services (Maven)
+# 4. Clone and build quarkus-agentic-dapr dependency
 # -------------------------------------------------------
-echo "--- Step 4: Building agent services with Maven ---"
+echo "--- Step 4: Cloning and building quarkus-agentic-dapr ---"
+AGENTIC_DAPR_DIR="$PROJECT_ROOT/.deps/quarkus-agentic-dapr"
+if [ -d "$AGENTIC_DAPR_DIR" ]; then
+  echo "quarkus-agentic-dapr already cloned, pulling latest changes..."
+  (cd "$AGENTIC_DAPR_DIR" && git pull)
+else
+  mkdir -p "$PROJECT_ROOT/.deps"
+  git clone https://github.com/salaboy/quarkus-agentic-dapr "$AGENTIC_DAPR_DIR"
+fi
+(cd "$AGENTIC_DAPR_DIR" && mvn clean install -DskipTests)
+echo ""
+
+# -------------------------------------------------------
+# 5. Build agent services (Maven)
+# -------------------------------------------------------
+echo "--- Step 5: Building agent services with Maven ---"
 AGENTS=(pizza-mcp cooking-agent delivery-agent store-mgmt-agent)
 for agent in "${AGENTS[@]}"; do
   echo "Building agents/$agent ..."
@@ -66,9 +81,9 @@ done
 echo ""
 
 # -------------------------------------------------------
-# 5. Build Docker images
+# 6. Build Docker images
 # -------------------------------------------------------
-echo "--- Step 5: Building Docker images ---"
+echo "--- Step 6: Building Docker images ---"
 cd "$PROJECT_ROOT"
 
 # Store image (includes front-end static export)
@@ -88,9 +103,9 @@ docker build -t pizza-vibe-store-mgmt-agent:latest -f agents/store-mgmt-agent/sr
 echo ""
 
 # -------------------------------------------------------
-# 6. Load images into KIND
+# 7. Load images into KIND
 # -------------------------------------------------------
-echo "--- Step 6: Loading images into KIND cluster ---"
+echo "--- Step 7: Loading images into KIND cluster ---"
 IMAGES=(
   pizza-vibe-store
   pizza-vibe-inventory
@@ -109,9 +124,9 @@ done
 echo ""
 
 # -------------------------------------------------------
-# 7. Create secrets
+# 8. Create secrets
 # -------------------------------------------------------
-echo "--- Step 7: Creating secrets ---"
+echo "--- Step 8: Creating secrets ---"
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   echo "WARNING: ANTHROPIC_API_KEY environment variable is not set."
   echo "Set it and re-run, or create the secret manually:"
@@ -125,9 +140,9 @@ fi
 echo ""
 
 # -------------------------------------------------------
-# 8. Deploy the application
+# 9. Deploy the application
 # -------------------------------------------------------
-echo "--- Step 8: Deploying application ---"
+echo "--- Step 9: Deploying application ---"
 kubectl apply -f "$PROJECT_ROOT/k8s/"
 echo ""
 

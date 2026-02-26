@@ -6,10 +6,6 @@ import com.pizzavibe.store.model.KitchenOrderStatus;
 import com.pizzavibe.store.model.KitchenStatus;
 import dev.langchain4j.agentic.declarative.Output;
 import dev.langchain4j.agentic.declarative.ParallelAgent;
-import dev.langchain4j.agentic.declarative.ParallelExecutor;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public interface CoordinateKitchenWorkflow {
 

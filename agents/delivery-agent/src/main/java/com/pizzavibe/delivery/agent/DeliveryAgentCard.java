@@ -38,7 +38,7 @@ public class DeliveryAgentCard {
                                 .build()))
                 .preferredTransport(TransportProtocol.JSONRPC.asString())
                 .additionalInterfaces(List.of(
-                        new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://localhost:8888/")))
+                        new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://delivery-agent:8089/")))
                 .build();
     }
 }

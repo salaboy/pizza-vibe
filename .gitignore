@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# Cloned dependencies (setup-kind.sh)
+.deps/
+
 # Editor/IDE
 # .idea/
 # .vscode/
