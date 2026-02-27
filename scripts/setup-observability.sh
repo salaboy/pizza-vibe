@@ -24,9 +24,9 @@ kubectl get pods -l app.kubernetes.io/name=jaeger
 echo ""
 
 # -------------------------------------------------------
-# 2. Create OpenTelemetry namespace and Dash0 secrets
+# 2. Create OpenTelemetry namespace and configure Dash0
 # -------------------------------------------------------
-echo "--- Creating OpenTelemetry namespace and Dash0 secrets ---"
+echo "--- Creating OpenTelemetry namespace ---"
 kubectl create namespace opentelemetry --dry-run=client -o yaml | kubectl apply -f -
 
 if [ -n "${DASH0_AUTH_TOKEN:-}" ]; then
@@ -39,9 +39,11 @@ if [ -n "${DASH0_AUTH_TOKEN:-}" ]; then
     --from-literal=dash0-grpc-port="$DASH0_ENDPOINT_OTLP_GRPC_PORT" \
     --namespace=opentelemetry \
     --dry-run=client -o yaml | kubectl apply -f -
-  echo "Secret 'dash0-secrets' created in opentelemetry namespace."
+  echo "Dash0 secrets created. Collector will export to both Jaeger and Dash0."
+  COLLECTOR_VALUES="$OBSERVABILITY_DIR/collector-config.yaml"
 else
-  echo "DASH0_AUTH_TOKEN not set, skipping Dash0 secrets. Only Jaeger will receive telemetry."
+  echo "DASH0_AUTH_TOKEN not set. Collector will export to Jaeger only."
+  COLLECTOR_VALUES="$OBSERVABILITY_DIR/collector-config-jaeger-only.yaml"
 fi
 echo ""
 
@@ -52,11 +54,15 @@ echo "--- Installing OpenTelemetry Collector ---"
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts 2>/dev/null || true
 helm repo update
 if helm status otel-collector -n opentelemetry &>/dev/null; then
-  echo "OpenTelemetry Collector is already installed, skipping."
+  echo "OpenTelemetry Collector is already installed, upgrading with current config."
+  helm upgrade otel-collector open-telemetry/opentelemetry-collector \
+    --namespace opentelemetry \
+    -f "$COLLECTOR_VALUES" \
+    --wait
 else
   helm install otel-collector open-telemetry/opentelemetry-collector \
     --namespace opentelemetry \
-    -f "$OBSERVABILITY_DIR/collector-config.yaml" \
+    -f "$COLLECTOR_VALUES" \
     --wait
 fi
 echo "OpenTelemetry Collector pods:"
