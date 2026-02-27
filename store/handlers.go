@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"sync"
 
 	"github.com/google/uuid"
 )
@@ -27,21 +26,28 @@ type ProcessOrderRequest struct {
 
 // Store manages pizza orders and provides HTTP handlers for the store service.
 type Store struct {
-	mu         sync.RWMutex
-	orders     map[uuid.UUID]*Order
-	events     map[uuid.UUID][]OrderEvent
+	repo       OrderRepository
 	hub        *WebSocketHub
 	agentURL   string
 	httpClient *http.Client
 }
 
-// NewStore creates a new Store instance with initialized order storage and WebSocket hub.
+// NewStore creates a new Store instance with in-memory storage and WebSocket hub.
 func NewStore() *Store {
 	return &Store{
-		orders:   make(map[uuid.UUID]*Order),
-		events:   make(map[uuid.UUID][]OrderEvent),
-		hub:      NewWebSocketHub(),
-		agentURL: "http://store-mgmt-agent:9999",
+		repo:       NewMemoryRepository(),
+		hub:        NewWebSocketHub(),
+		agentURL:   "http://store-mgmt-agent:9999",
+		httpClient: &http.Client{},
+	}
+}
+
+// NewStoreWithRepo creates a new Store instance with the given repository.
+func NewStoreWithRepo(repo OrderRepository) *Store {
+	return &Store{
+		repo:       repo,
+		hub:        NewWebSocketHub(),
+		agentURL:   "http://store-mgmt-agent:9999",
 		httpClient: &http.Client{},
 	}
 }
@@ -76,9 +82,11 @@ func (s *Store) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store the order
-	s.mu.Lock()
-	s.orders[order.OrderID] = order
-	s.mu.Unlock()
+	if err := s.repo.CreateOrder(order); err != nil {
+		slog.Error("failed to create order", "error", err)
+		http.Error(w, "Failed to create order", http.StatusInternalServerError)
+		return
+	}
 
 	slog.Info("order created", "orderId", order.OrderID, "items", len(order.OrderItems))
 
@@ -126,22 +134,12 @@ func (s *Store) callStoreMgmtAgent(ctx context.Context, order *Order) {
 
 // GetOrder retrieves an order by its UUID.
 func (s *Store) GetOrder(orderID uuid.UUID) (*Order, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	order, exists := s.orders[orderID]
-	return order, exists
+	return s.repo.GetOrder(orderID)
 }
 
 // UpdateOrderStatus updates the status of an existing order.
 func (s *Store) UpdateOrderStatus(orderID uuid.UUID, status string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	order, exists := s.orders[orderID]
-	if !exists {
-		return false
-	}
-	order.OrderStatus = status
-	return true
+	return s.repo.UpdateOrderStatus(orderID, status)
 }
 
 // OrderEvent represents an event received from kitchen, delivery, or agent services.
@@ -172,7 +170,7 @@ func (s *Store) HandleEvent(w http.ResponseWriter, r *http.Request) {
 		// PENDING → COOKED → DELIVERED. Intermediate progress events
 		// (e.g. oven_progress, ON_ROUTE) are tracked but do not alter the order status.
 		switch event.Status {
-		case "COOKED", "DELIVERED":
+		case "COOKING", "COOKED", "DELIVERING", "DELIVERED":
 			if !s.UpdateOrderStatus(orderID, event.Status) {
 				slog.Warn("order not found for event", "orderId", event.OrderID, "status", event.Status, "source", event.Source)
 			}
@@ -199,26 +197,28 @@ func (s *Store) HandleEvent(w http.ResponseWriter, r *http.Request) {
 
 // trackEvent stores an event in the order's event history keyed by UUID.
 func (s *Store) trackEvent(orderID uuid.UUID, event OrderEvent) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.events[orderID] = append(s.events[orderID], event)
+	if err := s.repo.TrackEvent(orderID, event); err != nil {
+		slog.Error("failed to track event", "orderId", orderID, "error", err)
+	}
 }
 
 // GetOrderEvents retrieves all events for a given order ID.
 func (s *Store) GetOrderEvents(orderID uuid.UUID) []OrderEvent {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.events[orderID]
+	events, err := s.repo.GetOrderEvents(orderID)
+	if err != nil {
+		slog.Error("failed to get order events", "orderId", orderID, "error", err)
+		return nil
+	}
+	return events
 }
 
 // HandleGetOrders handles GET /orders requests to retrieve all orders.
 func (s *Store) HandleGetOrders(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	orders := make([]*Order, 0, len(s.orders))
-	for _, order := range s.orders {
-		orders = append(orders, order)
+	orders, err := s.repo.GetAllOrders()
+	if err != nil {
+		slog.Error("failed to get orders", "error", err)
+		http.Error(w, "Failed to retrieve orders", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -164,7 +164,7 @@ func (s *BikeService) autoRelease(bikeID string, user string) {
 	}
 	s.mu.RUnlock()
 
-	s.sendOrderMessageEvent(orderID, bikeID, "preparing to deliver")
+	s.sendOrderMessageEvent(orderID, bikeID, "DELIVERING", "preparing to deliver")
 	eventInterval := duration / 4
 	steps := 4
 	for i := 1; i <= steps; i++ {
@@ -195,7 +195,7 @@ func (s *BikeService) autoRelease(bikeID string, user string) {
 		slog.Info("bike auto-released", "bikeId", bikeID)
 	}
 	s.mu.Unlock()
-	s.sendOrderMessageEvent(orderID, bikeID, "delivered")
+	s.sendOrderMessageEvent(orderID, bikeID, "DELIVERED", "order delivered")
 }
 
 // sendProgressToStore sends a bike progress event to the store service /events endpoint.
@@ -223,13 +223,13 @@ func (s *BikeService) sendProgressToStore(orderID, bikeID string, progress int) 
 }
 
 // sendOrderDeliveredEvent sends an event to the store when the order is delivered.
-func (s *BikeService) sendOrderMessageEvent(orderID, bikeID string, message string) {
+func (s *BikeService) sendOrderMessageEvent(orderID, bikeID string, status string, message string) {
 	if s.storeURL == "" {
 		return
 	}
 	event := storeOrderEvent{
 		OrderID: orderID,
-		Status:  "DELIVERED",
+		Status:  status,
 		Source:  "bikes",
 		Message: fmt.Sprintf("Bike %s %s the order: %s", bikeID, message, orderID),
 	}

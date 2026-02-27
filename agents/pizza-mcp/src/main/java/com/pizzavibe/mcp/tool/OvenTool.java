@@ -40,14 +40,16 @@ public class OvenTool {
             @ToolArg(description = "The oven ID (e.g., oven-1, oven-2, oven-3, oven-4)") String ovenId,
             @ToolArg(description = "The order ID to track progress for") String orderId) {
         int maxAttempts = 30;
-        sendMessageEventToStore( orderId, "Preparing pizza in oven: "+ ovenId);
+
+        sendMessageEventToStore( orderId, "RESERVING_OVEN", "Preparing pizza in oven: "+ ovenId);
         for (int i = 0; i < maxAttempts; i++) {
             Oven oven = ovenClient.getById(ovenId);
             // Send progress event to store
-            sendProgressToStore(orderId, ovenId, oven.progress(), oven.status());
+            sendProgressToStore(orderId, ovenId, oven.progress(), "COOKING");
             if (Oven.STATUS_AVAILABLE.equals(oven.status())) {
-              sendProgressToStore(orderId, ovenId, 100, oven.status());
-              sendMessageEventToStore( orderId, "Pizza cooked!");
+              sendProgressToStore(orderId, ovenId, 100, "COOKING");
+              sendMessageEventToStore( orderId, "COOKED", "Pizza cooked!");
+              sendMessageEventToStore( orderId, "RELEASING_OVEN", "Releasing oven: "+ ovenId);
               return "Oven: " + oven.id() + ", Status: " + oven.status() + ", Progress: 100%";
             }
             try {
@@ -79,10 +81,10 @@ public class OvenTool {
         }
     }
 
-    private void sendMessageEventToStore(String orderId, String message) {
+    private void sendMessageEventToStore(String orderId, String status, String message) {
         try {
             String cleanOrderId = orderId != null ? orderId.trim() : "";
-            StoreOrderEvent event = new StoreOrderEvent(cleanOrderId, "COOKED", "kitchen", message);
+            StoreOrderEvent event = new StoreOrderEvent(cleanOrderId, status, "kitchen", message);
             storeClient.sendEvent(event);
         } catch (Exception e) {
             LOG.warn("Failed to send event to store (orderId=" + orderId + "): " + e.getMessage());

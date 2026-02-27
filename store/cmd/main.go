@@ -28,7 +28,20 @@ func main() {
 		port = "8080"
 	}
 
-	s := store.NewStore()
+	var s *store.Store
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		repo, err := store.NewPostgresRepository(dbURL)
+		if err != nil {
+			slog.Error("failed to connect to database", "error", err)
+			os.Exit(1)
+		}
+		defer repo.Close()
+		s = store.NewStoreWithRepo(repo)
+		slog.Info("using PostgreSQL repository")
+	} else {
+		s = store.NewStore()
+		slog.Info("using in-memory repository")
+	}
 	if agentURL := os.Getenv("STORE_MGMT_AGENT_URL"); agentURL != "" {
 		s.SetAgentURL(agentURL)
 	}

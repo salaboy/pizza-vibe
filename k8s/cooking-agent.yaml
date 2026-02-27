@@ -28,6 +28,8 @@ spec:
                   key: api-key
             - name: PIZZA_MCP_URL
               value: "http://pizza-mcp:8086/mcp/sse"
+            - name: STORE_SERVICE_URL
+              value: "http://store:8080"
           livenessProbe:
             httpGet:
               path: /q/health

@@ -13,7 +13,7 @@ This guide walks you through deploying Pizza Vibe into a local Kubernetes cluste
 
 ## Quick Start (Script)
 
-To run all the steps below automatically:
+> **Warning:** The `ANTHROPIC_API_KEY` environment variable **must** be set before running the setup script. The script will exit immediately if it is missing. The agent services (cooking-agent, delivery-agent, store-mgmt-agent) need this key to call the Anthropic API.
 
 ```bash
 export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
@@ -167,6 +167,20 @@ kubectl port-forward svc/store 8080:8080
 Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 The store serves the front-end static files, API endpoints, and WebSocket connections all on port 8080 — no additional port-forwarding is needed.
+
+### Accessing PostgreSQL from outside the cluster
+
+To connect to the in-cluster PostgreSQL instance from your local machine (e.g. with `psql` or a GUI client), port-forward the PostgreSQL service:
+
+```bash
+kubectl port-forward svc/postgresql 5432:5432
+```
+
+Then connect using:
+
+```bash
+psql postgres://postgres:postgres@localhost:5432/dapr_store
+```
 
 ## Services
 

@@ -1,4 +1,20 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pizza_store
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   store:
     build:
       context: .
@@ -12,6 +28,10 @@ services:
       - BIKES_SERVICE_URL=http://bikes:8088
       - DRINKS_STOCK_SERVICE_URL=http://drinks-stock:8090
       - STORE_MGMT_AGENT_URL=http://docker.for.mac.host.internal:9999
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/pizza_store?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - pizza-network
     healthcheck:

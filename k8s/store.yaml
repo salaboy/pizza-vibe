@@ -33,6 +33,8 @@ spec:
               value: "http://drinks-stock:8090"
             - name: STORE_MGMT_AGENT_URL
               value: "http://store-mgmt-agent:9999"
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgresql.default.svc.cluster.local:5432/dapr_store?sslmode=disable"
           livenessProbe:
             httpGet:
               path: /health

@@ -12,6 +12,8 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +21,8 @@ import java.util.List;
 @Path("/mgmt")
 public class StoreMgmtResource {
 
-    @Inject
+  private static final Logger log = LoggerFactory.getLogger(StoreMgmtResource.class);
+  @Inject
     PizzaOrderWorkflow pizzaOrderWorkflowAgent;
 
     @GET
@@ -33,7 +36,7 @@ public class StoreMgmtResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public PizzaOrderStatus processOrder(ProcessOrderRequest request) {
-      System.out.println(request.toString());
+        log.info(request.toString());
         return pizzaOrderWorkflowAgent.processPizzaOrder(request.orderId(),
             Arrays.toString(request.orderItems().toArray()),
             Arrays.toString(request.drinkItems().toArray()));
