@@ -13,8 +13,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.30.8</quarkus.platform.version>
-    <quarkus-langchain4j.version>1.6.0.CR2</quarkus-langchain4j.version>
+    <quarkus.platform.version>3.31.2</quarkus.platform.version>
+    <quarkus-langchain4j.version>1.7.1</quarkus-langchain4j.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <a2a.version>0.3.2.Final</a2a.version>
@@ -96,6 +96,10 @@
       <artifactId>a2a-java-sdk-reference-jsonrpc</artifactId>
       <version>${a2a.version}</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.quarkus</groupId>-->
+<!--      <artifactId>quarkus-opentelemetry</artifactId>-->
+<!--    </dependency>-->
   </dependencies>
 
   <build>

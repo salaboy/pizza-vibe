@@ -37,6 +37,10 @@ spec:
               value: "http://cooking-agent:8087"
             - name: DELIVERY_AGENT_URL
               value: "http://delivery-agent:8089"
+            - name: OTEL_INSTRUMENTATION_NETTY_ENABLED
+              value: "false"
+#            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+#              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
           livenessProbe:
             httpGet:
               path: /q/health

@@ -31,6 +31,8 @@ spec:
               value: "http://store:8080"
             - name: DRINKS_STOCK_SERVICE_URL
               value: "http://drinks-stock:8090"
+            - name: OTEL_INSTRUMENTATION_NETTY_ENABLED
+              value: "false"
           livenessProbe:
             httpGet:
               path: /q/health

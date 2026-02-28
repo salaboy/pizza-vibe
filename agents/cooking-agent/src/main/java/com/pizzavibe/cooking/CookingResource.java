@@ -1,11 +1,9 @@
 package com.pizzavibe.cooking;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pizzavibe.cooking.agent.CookingAgent;
 import com.pizzavibe.cooking.client.StoreClient;
 import com.pizzavibe.cooking.model.CookRequest;
-import com.pizzavibe.cooking.model.Pizza;
 import com.pizzavibe.cooking.model.StoreOrderEvent;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
