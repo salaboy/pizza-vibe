@@ -32,6 +32,8 @@ spec:
               value: "http://pizza-mcp:8086/mcp/sse"
             - name: STORE_SERVICE_URL
               value: "http://store:8080"
+            - name: OTEL_INSTRUMENTATION_NETTY_ENABLED
+              value: "false"
           livenessProbe:
             httpGet:
               path: /q/health
