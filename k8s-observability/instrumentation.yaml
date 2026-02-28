@@ -13,3 +13,7 @@ spec:
     type: always_on
   resource:
     addK8sUIDAttributes: true
+  go:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
