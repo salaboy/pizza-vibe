@@ -95,13 +95,13 @@
       <artifactId>quarkus-smallrye-health</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-agentic-a2a</artifactId>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>io.quarkus</groupId>-->
-<!--      <artifactId>quarkus-opentelemetry</artifactId>-->
-<!--    </dependency>-->
   </dependencies>
 
   <build>

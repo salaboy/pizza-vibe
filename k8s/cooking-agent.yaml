@@ -32,7 +32,7 @@ spec:
               value: "http://pizza-mcp:8086/mcp/sse"
             - name: STORE_SERVICE_URL
               value: "http://store:8080"
-            - name: OTEL_INSTRUMENTATION_NETTY_ENABLED
+            - name: OTEL_JAVAAGENT_ENABLED
               value: "false"
            # - name: OTEL_EXPORTER_OTLP_ENDPOINT
            #   value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
