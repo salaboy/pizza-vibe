@@ -10,7 +10,41 @@
   height: 100%;
 }
 
-.placeholder {
+.rightPanel {
   flex: 1;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.rightHeader {
+  padding: var(--space-padding);
+  padding-top: calc(var(--space-padding) + var(--space-spacing-s));
+}
+
+.statusSection {
+  flex: 1;
+  display: flex;
+  gap: var(--space-gap);
+  padding: 0 var(--space-padding) var(--space-padding);
+  min-height: 0;
+}
+
+.ordersColumn {
+  flex: 1;
+}
+
+.rightColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap);
+}
+
+.kitchenBlock {
+  flex: 1;
+}
+
+.deliveryBlock {
+  flex: 1;
 }

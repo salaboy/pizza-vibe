@@ -26,7 +26,24 @@ export default function ChatPage() {
           onSubmit={handleSubmit}
         />
       </div>
-      <div className={styles.placeholder} />
+      <div className={styles.rightPanel}>
+        <div className={styles.rightHeader}>
+          <h2>Pizza Vibe Status</h2>
+        </div>
+        <div className={styles.statusSection}>
+          <div className={styles.ordersColumn}>
+            <h3>Orders</h3>
+          </div>
+          <div className={styles.rightColumn}>
+            <div className={styles.kitchenBlock}>
+              <h3>Kitchen</h3>
+            </div>
+            <div className={styles.deliveryBlock}>
+              <h3>Delivery</h3>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
