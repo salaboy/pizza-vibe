@@ -6,7 +6,13 @@ set -euo pipefail
 
 BASE_URL="${1:-http://localhost:8088}"
 
-response=$(curl -s -w "\n%{http_code}" "${BASE_URL}/bikes")
+# Build traceparent header if available (W3C Trace Context propagation)
+TRACE_HEADER=()
+if [ -n "${TRACEPARENT:-}" ]; then
+  TRACE_HEADER=(-H "traceparent: ${TRACEPARENT}")
+fi
+
+response=$(curl -s -w "\n%{http_code}" "${TRACE_HEADER[@]+"${TRACE_HEADER[@]}"}" "${BASE_URL}/bikes")
 http_code=$(echo "$response" | tail -n1)
 body=$(echo "$response" | sed '$d')
 

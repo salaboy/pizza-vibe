@@ -21,8 +21,15 @@ else
   PAYLOAD="{\"user\": \"${USER}\"}"
 fi
 
+# Build traceparent header if available (W3C Trace Context propagation)
+TRACE_HEADER=()
+if [ -n "${TRACEPARENT:-}" ]; then
+  TRACE_HEADER=(-H "traceparent: ${TRACEPARENT}")
+fi
+
 response=$(curl -s -w "\n%{http_code}" -X POST \
   -H "Content-Type: application/json" \
+  "${TRACE_HEADER[@]+"${TRACE_HEADER[@]}"}" \
   -d "$PAYLOAD" \
   "${BASE_URL}/bikes/${BIKE_ID}")
 http_code=$(echo "$response" | tail -n1)

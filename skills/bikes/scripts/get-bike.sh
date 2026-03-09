@@ -14,8 +14,14 @@ BIKE_ID="$1"
 BASE_URL="${2:-http://localhost:8088}"
 MAX_ATTEMPTS=30
 
+# Build traceparent header if available (W3C Trace Context propagation)
+TRACE_HEADER=()
+if [ -n "${TRACEPARENT:-}" ]; then
+  TRACE_HEADER=(-H "traceparent: ${TRACEPARENT}")
+fi
+
 for (( i=1; i<=MAX_ATTEMPTS; i++ )); do
-  response=$(curl -s -w "\n%{http_code}" "${BASE_URL}/bikes/${BIKE_ID}")
+  response=$(curl -s -w "\n%{http_code}" "${TRACE_HEADER[@]+"${TRACE_HEADER[@]}"}" "${BASE_URL}/bikes/${BIKE_ID}")
   http_code=$(echo "$response" | tail -n1)
   body=$(echo "$response" | sed '$d')
 

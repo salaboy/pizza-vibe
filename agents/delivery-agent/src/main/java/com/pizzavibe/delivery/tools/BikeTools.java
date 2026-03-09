@@ -1,16 +1,25 @@
 package com.pizzavibe.delivery.tools;
 
 import dev.langchain4j.agent.tool.Tool;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class BikeTools {
+
+    @Inject
+    Tracer tracer;
 
     @ConfigProperty(name = "bikes.service.url", defaultValue = "http://localhost:8088")
     String bikesServiceUrl;
@@ -34,13 +43,31 @@ public class BikeTools {
     }
 
     String runScript(String scriptPath, String... args) {
-        try {
+        String scriptName = Path.of(scriptPath).getFileName().toString();
+        Span skillSpan = tracer.spanBuilder("skill.execute")
+                .setAttribute("skill.name", "bikes")
+                .setAttribute("skill.script", scriptName)
+                .setAttribute("skill.script.path", scriptPath)
+                .startSpan();
+
+        try (var scope = skillSpan.makeCurrent()) {
             var command = new java.util.ArrayList<String>();
             command.add("bash");
             command.add(scriptPath);
             command.addAll(java.util.List.of(args));
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
+
+            // Propagate W3C Trace Context to shell scripts via environment variable
+            SpanContext spanCtx = Span.current().getSpanContext();
+            if (spanCtx.isValid()) {
+                String traceparent = String.format("00-%s-%s-%s",
+                        spanCtx.getTraceId(),
+                        spanCtx.getSpanId(),
+                        spanCtx.getTraceFlags().asHex());
+                pb.environment().put("TRACEPARENT", traceparent);
+            }
+
             Process process = pb.start();
             String output;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
@@ -48,11 +75,15 @@ public class BikeTools {
             }
             int exitCode = process.waitFor();
             if (exitCode != 0) {
+                skillSpan.setStatus(StatusCode.ERROR, "Script exited with code " + exitCode);
                 return "{\"error\": \"Script exited with code " + exitCode + ": " + output + "\"}";
             }
             return output;
         } catch (IOException | InterruptedException e) {
+            skillSpan.setStatus(StatusCode.ERROR, e.getMessage());
             return "{\"error\": \"" + e.getMessage() + "\"}";
+        } finally {
+            skillSpan.end();
         }
     }
 }
