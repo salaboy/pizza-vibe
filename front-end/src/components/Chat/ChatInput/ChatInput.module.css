@@ -1,0 +1,73 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-spacing-s);
+  width: 100%;
+  height: 88px;
+  padding-left: var(--space-padding);
+  padding-right: var(--space-spacing-l);
+  padding-top: var(--space-spacing-l);
+  padding-bottom: var(--space-spacing-l);
+  border-radius: var(--corner-xl);
+  background-color: var(--color-background-disabled);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  box-shadow: 0 var(--shadow-level-1-y) var(--shadow-level-1-blur) 0 var(--shadow-level-1);
+}
+
+.wrapper:not(.disabled):hover,
+.wrapper:not(.disabled):focus-within {
+  background-color: var(--color-background-default);
+}
+
+.wrapper.disabled {
+  background-color: var(--color-background-disabled);
+  border: none;
+  box-shadow: none;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-default-font-size);
+  font-weight: var(--type-body-default-font-weight);
+  line-height: var(--type-body-default-line-height);
+  color: var(--color-text-default);
+}
+
+.input::placeholder {
+  color: var(--color-text-subtle);
+}
+
+.input:disabled {
+  color: var(--color-text-disabled);
+}
+
+.input:disabled::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-spacing-xl-2);
+  height: var(--space-spacing-xl-2);
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-disabled);
+}
+
+.sendButton:not(:disabled) {
+  color: var(--color-text-default);
+}
+
+.sendButton:disabled {
+  cursor: not-allowed;
+}

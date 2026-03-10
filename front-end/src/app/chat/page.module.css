@@ -1,0 +1,4 @@
+.page {
+  height: 100vh;
+  margin: 0 calc(-1 * var(--space-margin));
+}

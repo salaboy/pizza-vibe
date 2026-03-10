@@ -14,6 +14,7 @@ export default function Navigation() {
     { href: '/oven', label: 'Ovens' },
     { href: '/bikes', label: 'Bikes' },
     { href: '/management', label: 'Management' },
+    { href: '/chat', label: 'Orders (Chat)' },
   ];
 
   return (

@@ -1,0 +1,111 @@
+.message {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-spacing-l);
+  border-radius: var(--corner-xl);
+  max-width: 100%;
+}
+
+.bot {
+  background-color: var(--color-background-default);
+  align-self: flex-start;
+}
+
+.user {
+  background-color: var(--color-background-inverted-default);
+  align-self: flex-end;
+}
+
+.text {
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-default-font-size);
+  font-weight: var(--type-body-default-font-weight);
+  line-height: var(--type-body-default-line-height);
+}
+
+.bot .text {
+  color: var(--color-text-default);
+}
+
+.user .text {
+  color: var(--color-text-inverted-default);
+}
+
+.event {
+  background-color: var(--color-background-subtle);
+  align-self: flex-start;
+  border-left: 3px solid var(--color-primary);
+}
+
+.event .text {
+  color: var(--color-text-subtle);
+  font-size: var(--type-body-small-font-size);
+  line-height: var(--type-body-small-line-height);
+}
+
+/* Pulsing animation for in-progress Kitchen/Delivery updates */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.processing {
+  animation: pulse 1.5s ease-in-out infinite;
+  border-left: 3px solid var(--color-background-primary-default);
+}
+
+/* Markdown paragraph spacing */
+.paragraph {
+  margin: 0;
+}
+
+.paragraph + .paragraph {
+  margin-top: var(--space-spacing-s);
+}
+
+/* Markdown bold */
+.bold {
+  font-weight: 700;
+}
+
+/* Markdown lists */
+.list {
+  margin: var(--space-spacing-s) 0;
+  padding-left: var(--space-spacing-l);
+}
+
+.listItem {
+  margin: 2px 0;
+}
+
+/* Markdown tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-spacing-m) 0;
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-default-font-size);
+}
+
+.th {
+  text-align: left;
+  padding: var(--space-spacing-s) var(--space-spacing-m);
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.td {
+  padding: var(--space-spacing-s) var(--space-spacing-m);
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+  white-space: nowrap;
+}
+
+.th:last-child,
+.td:last-child {
+  text-align: right;
+}

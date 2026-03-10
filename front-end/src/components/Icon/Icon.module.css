@@ -2,8 +2,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-spacing-xxl);
-  height: var(--space-spacing-xxl);
+  width: var(--space-spacing-xl-2);
+  height: var(--space-spacing-xl-2);
   color: inherit;
 }
 

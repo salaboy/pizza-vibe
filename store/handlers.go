@@ -1,14 +1,24 @@
 package store
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+// ChatRequest represents a chat message sent to the store management agent.
+type ChatRequest struct {
+	SessionID string `json:"sessionId"`
+	Message   string `json:"message"`
+}
 
 // CreateOrderRequest represents the request body for creating a new order.
 type CreateOrderRequest struct {
@@ -246,4 +256,70 @@ func (s *Store) HandleGetEvents(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
+}
+
+// HandleChat proxies chat messages to the store management agent's /mgmt/chat SSE endpoint
+// and streams the response back to the client as server-sent events.
+func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
+	var chatReq ChatRequest
+	if err := json.NewDecoder(r.Body).Decode(&chatReq); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if chatReq.Message == "" {
+		http.Error(w, "message is required", http.StatusBadRequest)
+		return
+	}
+
+	body, err := json.Marshal(chatReq)
+	if err != nil {
+		http.Error(w, "Failed to marshal request", http.StatusInternalServerError)
+		return
+	}
+
+	agentReq, err := http.NewRequestWithContext(r.Context(), http.MethodPost, s.agentURL+"/mgmt/chat", bytes.NewReader(body))
+	if err != nil {
+		slog.Error("failed to create chat agent request", "error", err)
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		return
+	}
+	agentReq.Header.Set("Content-Type", "application/json")
+	agentReq.Header.Set("Accept", "text/event-stream")
+
+	resp, err := s.httpClient.Do(agentReq)
+	if err != nil {
+		slog.Error("failed to call chat agent", "error", err)
+		http.Error(w, "Failed to reach chat agent", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		slog.Warn("chat agent returned unexpected status", "status", resp.StatusCode, "body", string(respBody))
+		http.Error(w, fmt.Sprintf("Chat agent error: %s", string(respBody)), resp.StatusCode)
+		return
+	}
+
+	// Stream SSE response back to the client
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "data:") {
+			fmt.Fprintf(w, "%s\n\n", line)
+			flusher.Flush()
+		}
+	}
 }

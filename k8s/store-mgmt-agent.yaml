@@ -40,6 +40,8 @@ spec:
               value: "http://cooking-agent:8087"
             - name: DELIVERY_AGENT_URL
               value: "http://delivery-agent:8089"
+            - name: STORE_SERVICE_URL
+              value: "http://store:8080"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
