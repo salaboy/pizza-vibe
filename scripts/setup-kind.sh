@@ -10,6 +10,14 @@ echo "Project root: $PROJECT_ROOT"
 echo ""
 
 # -------------------------------------------------------
+# Pre-flight: Require kind
+# -------------------------------------------------------
+if ! command -v kind &>/dev/null; then
+  echo "kind not found, installing..."
+  brew install kind
+fi
+
+# -------------------------------------------------------
 # Pre-flight: Require ANTHROPIC_API_KEY
 # -------------------------------------------------------
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
