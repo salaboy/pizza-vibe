@@ -1,0 +1,25 @@
+.indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 var(--border-width-thick) transparent;
+}
+
+/* Status: Active */
+.active {
+  background-color: var(--color-background-primary-default);
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--color-border-primary-default);
+}
+
+/* Status: Inactive */
+.inactive {
+  background-color: var(--color-background-disabled);
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--color-border-disabled);
+}
+
+/* Status: Failed */
+.failed {
+  background-color: var(--color-background-secondary-default);
+  box-shadow: inset 0 0 0 var(--border-width-thick) var(--color-border-secondary-default);
+}

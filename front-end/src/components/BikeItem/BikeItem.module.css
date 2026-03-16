@@ -1,0 +1,92 @@
+.item {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: var(--space-spacing-s);
+  border-radius: var(--corner-m);
+  
+  border: var(--border-width-thick) solid transparent;
+}
+
+/* Status: Idle */
+.idle .icon {
+  opacity: 0.5;
+}
+
+.idle .label {
+  opacity: 0.5;
+  color: var(--color-text-subtle);
+}
+
+.idle .badge {
+  opacity: 0.5;
+  color: var(--color-text-subtle);
+}
+
+/* Status: Delivering */
+.delivering {
+  border-color: var(--color-border-primary-default);
+  background-color: var(--color-background-default);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.delivering .label {
+  color: var(--color-text-default);
+}
+
+.delivering .badge {
+  background-color: var(--color-background-primary-default);
+  border: var(--border-width-thick) solid var(--color-border-primary-default);
+  color: var(--color-text-primary-default);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.label {
+  font-family: var(--type-body-small-font-family);
+  font-size: var(--type-body-small-font-size);
+  font-weight: var(--type-body-small-font-weight);
+  line-height: var(--type-body-small-line-height);
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+}
+
+.badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  left: -4px;
+  top: -4px;
+  padding: var(--space-spacing-s);
+  border-radius: var(--corner-m);
+  font-family: var(--type-heading-h3-font-family);
+  font-size: var(--type-heading-h3-font-size);
+  font-weight: var(--type-heading-h3-font-weight);
+  line-height: var(--type-heading-h3-line-height);
+  border: var(--border-width-thick) solid transparent;
+  text-align: center;
+  text-transform: uppercase;
+  width: var(--space-spacing-b);
+}
+
+.badge span {
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+  leading-trim: both;
+  text-edge: cap;
+}

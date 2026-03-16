@@ -16,10 +16,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.microprofile.context.ManagedExecutor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,9 @@ public class OrderSubmissionTool {
     @RestClient
     AgentEventClient agentEventClient;
 
+    @Inject
+    ManagedExecutor managedExecutor;
+
     @Tool("Submit a validated pizza order for processing. " +
           "Call this only when the customer has confirmed their order and stock has been validated. " +
           "orderItems is a string describing pizza items e.g. 'OrderItem[pizzaType=Pepperoni, quantity=2], OrderItem[pizzaType=Margherita, quantity=1]'. " +
@@ -54,7 +58,7 @@ public class OrderSubmissionTool {
         List<DrinkItem> parsedDrinkItems = parseDrinkItems(drinkItems);
         ProcessOrderRequest request = new ProcessOrderRequest(orderId, parsedOrderItems, parsedDrinkItems);
 
-        CompletableFuture.runAsync(() -> {
+        managedExecutor.runAsync(() -> {
             try {
                 log.info("Processing order {} via HTTP call to /mgmt/processOrder", orderId);
                 PizzaOrderStatus status = storeMgmtClient.processOrder(request);

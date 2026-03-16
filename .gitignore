@@ -30,6 +30,9 @@ go.work.sum
 # Cloned dependencies (setup-kind.sh)
 .deps/
 
+# MCP config (contains tokens)
+.mcp.json
+
 # Editor/IDE
 # .idea/
 # .vscode/

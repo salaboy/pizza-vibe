@@ -43,6 +43,19 @@
   line-height: var(--type-body-small-line-height);
 }
 
+/* Size: Small */
+.small {
+  padding: var(--space-spacing-s);
+  border-radius: var(--corner-s);
+}
+
+.small .text {
+  font-family: var(--type-body-small-font-family);
+  font-size: var(--type-body-small-font-size);
+  font-weight: var(--type-body-small-font-weight);
+  line-height: var(--type-body-small-line-height);
+}
+
 /* Pulsing animation for in-progress Kitchen/Delivery updates */
 @keyframes pulse {
   0%, 100% {

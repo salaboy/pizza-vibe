@@ -1,0 +1,40 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Agents Section */
+.agentsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-padding);
+  padding: var(--space-padding);
+}
+
+.agentsTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: clip;
+}
+
+.agentsTitle {
+  font-family: var(--type-heading-h2-font-family);
+  font-size: var(--type-heading-h2-font-size);
+  font-weight: var(--type-heading-h2-font-weight);
+  line-height: var(--type-heading-h2-line-height);
+  color: var(--color-text-default);
+  margin: 0;
+}
+
+.agentPanels {
+  display: flex;
+  gap: var(--space-spacing-m);
+  overflow: clip;
+}
+
+.agentPanels > * {
+  flex: 1;
+  min-width: 0;
+}

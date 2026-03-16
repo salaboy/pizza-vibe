@@ -20,3 +20,17 @@
   align-items: flex-start;
   padding-right: var(--space-padding);
 }
+
+/* Size: Small */
+.small {
+  gap: var(--space-spacing-s);
+}
+
+.small.bot,
+.small.event {
+  padding-right: var(--space-spacing-m);
+}
+
+.small.user {
+  padding-left: var(--space-spacing-m);
+}

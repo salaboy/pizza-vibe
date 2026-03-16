@@ -26,7 +26,7 @@ func DefaultStock() map[string]int {
 	return map[string]int{
 		"Beer":        10,
 		"Coke":        10,
-		"DietCoke":    10,
+		"Water":       10,
 		"OrangeJuice": 10,
 	}
 }

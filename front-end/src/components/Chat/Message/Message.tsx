@@ -4,6 +4,7 @@ import styles from './Message.module.css';
 interface MessageProps {
   message: string;
   type?: 'bot' | 'user' | 'event';
+  size?: 'default' | 'small';
 }
 
 // Check if a message is a progress update (Kitchen cooking or Delivery in transit)
@@ -14,18 +15,19 @@ function isProgressMessage(text: string): boolean {
     (text.includes('...') || text.includes('%'));
 }
 
-export default function Message({ message, type = 'bot' }: MessageProps) {
+export default function Message({ message, type = 'bot', size = 'default' }: MessageProps) {
   const className = type === 'user'
     ? styles.user
     : type === 'event'
       ? styles.event
       : styles.bot;
 
+  const sizeClass = size === 'small' ? styles.small : '';
   const progress = isProgressMessage(message);
 
   if (type === 'bot' || type === 'event') {
     return (
-      <div className={`${styles.message} ${className} ${progress ? styles.processing : ''}`}>
+      <div className={`${styles.message} ${className} ${sizeClass} ${progress ? styles.processing : ''}`}>
         <div className={styles.text}>
           <ReactMarkdown
             components={{
@@ -47,7 +49,7 @@ export default function Message({ message, type = 'bot' }: MessageProps) {
   }
 
   return (
-    <div className={`${styles.message} ${className} ${progress ? styles.processing : ''}`}>
+    <div className={`${styles.message} ${className} ${sizeClass} ${progress ? styles.processing : ''}`}>
       <p className={styles.text}>{message}</p>
     </div>
   );
