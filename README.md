@@ -4,11 +4,11 @@ Pizza Vibe is an agentic pizza store that uses AI agents to orchestrate the enti
 
 Customers interact with a natural language chat assistant that coordinates behind the scenes with specialized AI agents for store management, cooking, and delivery.
 
-![Chat Interface](imgs/chat.png)
+<img src="imgs/chat.png" alt="Chat Interface" width="50%">
 
 An agents dashboard provides real-time visibility into what each agent is doing, along with the status of ovens, bikes, inventory, and drinks stock.
 
-![Agents Dashboard](imgs/agents-dashboard.png)
+<img src="imgs/agents-dashboard.png" alt="Agents Dashboard" width="50%">
 
 ## Getting Started
 
@@ -49,7 +49,7 @@ kubectl port-forward svc/jaeger-query 16686
 
 ## Architecture
 
-![Architecture](imgs/architecture.png)
+<img src="imgs/architecture.png" alt="Architecture" width="50%">
 
 The application follows a multi-agent architecture where a **React/Next.js frontend** communicates with a **Go backend (Store Service)** via HTTP and WebSocket. The Store Service coordinates three **AI agents** (built with Java, Quarkus, and LangChain4j) that use tools exposed by **Go microservices** through an **MCP server**.
 
