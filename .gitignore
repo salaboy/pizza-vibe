@@ -2,6 +2,7 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
+.deps
 *.exe
 *.exe~
 *.dll
@@ -10,7 +11,7 @@
  .DS_Store
 # Test binary, built with `go test -c`
 *.test
-
+target/
 # Code coverage profiles and other test artifacts
 *.out
 coverage.*
