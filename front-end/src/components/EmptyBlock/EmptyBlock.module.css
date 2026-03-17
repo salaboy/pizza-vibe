@@ -1,0 +1,6 @@
+.emptyBlock {
+  border: var(--border-width-thick) dotted var(--color-border-default);
+  border-radius: var(--corner-xl);
+  padding: var(--space-spacing-l);
+  width: 100%;
+}

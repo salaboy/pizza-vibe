@@ -1,0 +1,32 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-spacing-l);
+}
+
+.icon {
+  width: 62px;
+  height: 62px;
+  flex-shrink: 0;
+}
+
+.text {
+  width: 289px;
+  height: 53px;
+  flex-shrink: 0;
+}
+
+/* Small variant (used in Footer) */
+.small {
+  gap: var(--space-spacing-m);
+}
+
+.small .icon {
+  width: 31px;
+  height: 31px;
+}
+
+.small .text {
+  width: 144px;
+  height: 26px;
+}

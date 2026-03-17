@@ -1,0 +1,86 @@
+.pizzaItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-spacing-l);
+  align-items: flex-start;
+  min-width: 300px;
+  width: 300px;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Illustration Container */
+.illustrationContainer {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.illustration {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Add Button — visible on hover */
+.addButtonContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.pizzaItem:hover .addButtonContainer {
+  opacity: 1;
+}
+
+.addButtonOuter {
+  background-color: var(--color-background-default);
+  border: var(--border-width-thick) solid var(--color-border-subtle);
+  border-radius: 9999px;
+  padding: var(--space-spacing-m);
+}
+
+/* Info Container */
+.infoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-spacing-s);
+  align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-family: var(--type-heading-h3-font-family);
+  font-size: var(--type-heading-h3-font-size);
+  font-weight: var(--type-heading-h3-font-weight);
+  line-height: var(--type-heading-h3-line-height);
+  text-transform: uppercase;
+  color: var(--color-text-default);
+}
+
+.name {
+  flex: 1 0 0;
+}
+
+.price {
+  flex: 1 0 0;
+  text-align: right;
+}
+
+.description {
+  font-family: var(--type-body-small-font-family);
+  font-size: var(--type-body-small-font-size);
+  font-weight: var(--type-body-small-font-weight);
+  line-height: var(--type-body-small-line-height);
+  color: var(--color-text-subtle);
+  width: 100%;
+}

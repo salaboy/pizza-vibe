@@ -1,0 +1,33 @@
+.cartItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-spacing-l);
+  padding: var(--space-spacing-l) 0;
+  border-bottom: var(--border-width-thick) dotted var(--color-border-default);
+  width: 100%;
+}
+
+.name {
+  flex: 1 0 0;
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-default-font-size);
+  font-weight: var(--type-body-default-font-weight);
+  line-height: var(--type-body-default-line-height);
+  color: var(--color-text-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price {
+  flex-shrink: 0;
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-default-font-size);
+  font-weight: var(--type-body-default-font-weight);
+  line-height: var(--type-body-default-line-height);
+  color: var(--color-text-subtle);
+}
+
+.quantitySelector {
+  flex-shrink: 0;
+}

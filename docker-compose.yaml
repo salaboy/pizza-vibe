@@ -1,24 +1,19 @@
 services:
-  front-end:
-    build:
-      context: ./front-end
-      dockerfile: Dockerfile
+  postgres:
+    image: postgres:16-alpine
     ports:
-      - "3000:3000"
+      - "5432:5432"
     environment:
-      - STORE_SERVICE_URL=http://store:8080
-      - OVEN_SERVICE_URL=http://oven:8085
-      - INVENTORY_SERVICE_URL=http://inventory:8084
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pizza_store
     networks:
       - pizza-network
-    depends_on:
-      store:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
-      interval: 2s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   store:
     build:
@@ -28,43 +23,20 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+      - OVEN_SERVICE_URL=http://oven:8085
+      - INVENTORY_SERVICE_URL=http://inventory:8084
+      - BIKES_SERVICE_URL=http://bikes:8088
+      - DRINKS_STOCK_SERVICE_URL=http://drinks-stock:8090
+      - STORE_MGMT_AGENT_URL=http://docker.for.mac.host.internal:9999
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/pizza_store?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - pizza-network
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 5s
-      timeout: 10s
-      retries: 3
-
-  kitchen:
-    build:
-      context: .
-      dockerfile: kitchen/Dockerfile
-    ports:
-      - "8081:8081"
-    environment:
-      - PORT=8081
-    networks:
-      - pizza-network
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  delivery:
-    build:
-      context: .
-      dockerfile: delivery/Dockerfile
-    ports:
-      - "8082:8082"
-    environment:
-      - PORT=8082
-    networks:
-      - pizza-network
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8082/health"]
-      interval: 30s
       timeout: 10s
       retries: 3
 
@@ -99,6 +71,109 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  bikes:
+    build:
+      context: .
+      dockerfile: bikes/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - PORT=8088
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  drinks-stock:
+    build:
+      context: .
+      dockerfile: drinks-stock/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - PORT=8090
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pizza-mcp:
+    build:
+      context: ./agents/pizza-mcp
+      dockerfile: src/main/docker/Dockerfile.jvm
+    ports:
+      - "8086:8086"
+    environment:
+      - INVENTORY_SERVICE_URL=http://inventory:8084
+      - OVEN_SERVICE_URL=http://oven:8085
+      - STORE_SERVICE_URL=http://store:8080
+      - DRINKS_STOCK_SERVICE_URL=http://drinks-stock:8090
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8086/q/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cooking-agent:
+    build:
+      context: ./agents/cooking-agent
+      dockerfile: src/main/docker/Dockerfile.jvm
+    ports:
+      - "8087:8087"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PIZZA_MCP_URL=http://pizza-mcp:8086/mcp/sse
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8087/q/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  delivery-agent:
+    build:
+      context: .
+      dockerfile: agents/delivery-agent/src/main/docker/Dockerfile.jvm
+    ports:
+      - "8089:8089"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - BIKES_SERVICE_URL=http://bikes:8088
+      - BIKES_SKILL_SCRIPTS_PATH=/deployments/skills/bikes/scripts
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8089/q/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# This doesn't work because it requires Dapr to be running
+#  store-mgmt-agent:
+#    build:
+#      context: ./agents/store-mgmt-agent
+#      dockerfile: src/main/docker/Dockerfile.jvm
+#    ports:
+#      - "9999:9999"
+#    environment:
+#      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+#    networks:
+#      - pizza-network
+#    healthcheck:
+#      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9999/q/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
 
 networks:
   pizza-network:

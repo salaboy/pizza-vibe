@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-mgmt-agent
+  labels:
+    app: store-mgmt-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-mgmt-agent
+  template:
+    metadata:
+      labels:
+        app: store-mgmt-agent
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "store-mgmt-agent"
+        dapr.io/app-port: "9999"
+        dapr.io/log-level: "debug"
+        dapr.io/config: "tracing"
+        dapr.io/env: "OTEL_SERVICE_NAME=store-mgmt-agent-daprd"
+        instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
+    spec:
+      containers:
+        - name: store-mgmt-agent
+          image: pizza-vibe-store-mgmt-agent:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9999
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-secret
+                  key: api-key
+            - name: PIZZA_MCP_URL
+              value: "http://pizza-mcp:8086/mcp/sse"
+            - name: COOKING_AGENT_URL
+              value: "http://cooking-agent:8087"
+            - name: DELIVERY_AGENT_URL
+              value: "http://delivery-agent:8089"
+            - name: STORE_SERVICE_URL
+              value: "http://store:8080"
+            - name: STORE_MGMT_AGENT_URL
+              value: "http://store-mgmt-agent:9999"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+          livenessProbe:
+            httpGet:
+              path: /q/health
+              port: 9999
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /q/health
+              port: 9999
+            initialDelaySeconds: 15
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: store-mgmt-agent
+  labels:
+    app: store-mgmt-agent
+spec:
+  selector:
+    app: store-mgmt-agent
+  ports:
+    - port: 9999
+      targetPort: 9999
+      protocol: TCP
+  type: ClusterIP

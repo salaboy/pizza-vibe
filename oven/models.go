@@ -15,6 +15,7 @@ type Oven struct {
 	ID        string    `json:"id"`
 	Status    string    `json:"status"`
 	User      string    `json:"user,omitempty"`
+	Progress  int       `json:"progress"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 

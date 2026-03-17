@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drinks-stock
+  labels:
+    app: drinks-stock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drinks-stock
+  template:
+    metadata:
+      labels:
+        app: drinks-stock
+      annotations:
+        instrumentation.opentelemetry.io/inject-go: "opentelemetry/instrumentation"
+        instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/app/drinks-stock"
+    spec:
+      containers:
+        - name: drinks-stock
+          image: pizza-vibe-drinks-stock:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: PORT
+              value: "8090"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drinks-stock
+  labels:
+    app: drinks-stock
+spec:
+  selector:
+    app: drinks-stock
+  ports:
+    - port: 8090
+      targetPort: 8090
+      protocol: TCP
+  type: ClusterIP

@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: inventory
+      annotations:
+        instrumentation.opentelemetry.io/inject-go: "opentelemetry/instrumentation"
+        instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/app/inventory"
     spec:
       containers:
         - name: inventory

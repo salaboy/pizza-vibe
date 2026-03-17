@@ -1,0 +1,42 @@
+.tabItem {
+  display: inline-flex;
+  align-items: flex-start;
+  padding: var(--space-spacing-l);
+  border-radius: var(--corner-xl);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  cursor: pointer;
+  background-color: transparent;
+  font-family: var(--type-heading-h3-font-family);
+  font-size: var(--type-heading-h3-font-size);
+  font-weight: var(--type-heading-h3-font-weight);
+  line-height: var(--type-heading-h3-line-height);
+  text-transform: uppercase;
+  color: var(--color-text-default);
+}
+
+/* State: Hover */
+.tabItem:hover:not(.active) {
+  background-color: var(--color-background-default);
+  border-color: var(--color-border-primary-default);
+  color: var(--color-text-primary-default);
+}
+
+/* State: Active */
+.tabItem.active {
+  background-color: var(--color-background-inverted-default);
+  color: var(--color-text-inverted-default);
+  border-color: transparent;
+}
+
+/* State: Disabled */
+.tabItem.disabled {
+  border-color: var(--color-border-disabled);
+  color: var(--color-text-disabled);
+  cursor: default;
+}
+
+.tabItem.disabled:hover {
+  background-color: transparent;
+  border-color: var(--color-border-disabled);
+  color: var(--color-text-disabled);
+}

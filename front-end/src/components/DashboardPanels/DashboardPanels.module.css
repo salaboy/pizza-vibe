@@ -1,0 +1,10 @@
+.panels {
+  display: flex;
+  gap: var(--space-spacing-m);
+  padding: var(--space-spacing-m) var(--space-padding);
+  background-color: var(--color-background-primary-default);
+}
+
+.panels > * {
+  flex: 1;
+}

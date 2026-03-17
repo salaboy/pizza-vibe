@@ -2,15 +2,16 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
+.deps
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
+ .DS_Store
 # Test binary, built with `go test -c`
 *.test
-
+target/
 # Code coverage profiles and other test artifacts
 *.out
 coverage.*
@@ -26,6 +27,12 @@ go.work.sum
 
 # env file
 .env
+
+# Cloned dependencies (setup-kind.sh)
+.deps/
+
+# MCP config (contains tokens)
+.mcp.json
 
 # Editor/IDE
 # .idea/

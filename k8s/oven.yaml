@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: oven
+      annotations:
+        instrumentation.opentelemetry.io/inject-go: "opentelemetry/instrumentation"
+        instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/app/oven"
     spec:
       containers:
         - name: oven

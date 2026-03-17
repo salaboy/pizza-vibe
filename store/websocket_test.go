@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
-// TestWebSocketConnection verifies that clients can connect via WebSocket.
+// TestWebSocketConnection verifies that clients can connect via WebSocket using an orderId.
 func TestWebSocketConnection(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
@@ -22,21 +23,16 @@ func TestWebSocketConnection(t *testing.T) {
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	// Convert http URL to ws URL (with clientId)
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=test-client"
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + uuid.New().String()
 
-	// Connect to WebSocket
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("failed to connect to WebSocket: %v", err)
 	}
 	defer conn.Close()
-
-	// Connection successful
-	t.Log("WebSocket connection established successfully")
 }
 
-// TestWebSocketReceivesOrderUpdates verifies that WebSocket clients receive order updates.
+// TestWebSocketReceivesOrderUpdates verifies that a client only receives events for its orderId.
 func TestWebSocketReceivesOrderUpdates(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
@@ -47,15 +43,7 @@ func TestWebSocketReceivesOrderUpdates(t *testing.T) {
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	// Connect to WebSocket (with clientId)
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=update-client"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-	if err != nil {
-		t.Fatalf("failed to connect to WebSocket: %v", err)
-	}
-	defer conn.Close()
-
-	// Create an order via HTTP
+	// Create an order first
 	orderReq := CreateOrderRequest{
 		OrderItems: []OrderItem{
 			{PizzaType: "Margherita", Quantity: 1},
@@ -72,9 +60,17 @@ func TestWebSocketReceivesOrderUpdates(t *testing.T) {
 	var createdOrder Order
 	json.NewDecoder(resp.Body).Decode(&createdOrder)
 
-	// Send an event to update the order
+	// Connect using the orderId as the WebSocket identifier
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + createdOrder.OrderID.String()
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("failed to connect to WebSocket: %v", err)
+	}
+	defer conn.Close()
+
+	// Send an event for this order
 	eventReq := OrderEvent{
-		OrderID: createdOrder.OrderID,
+		OrderID: createdOrder.OrderID.String(),
 		Status:  "cooking",
 		Source:  "kitchen",
 	}
@@ -92,14 +88,13 @@ func TestWebSocketReceivesOrderUpdates(t *testing.T) {
 		t.Fatalf("failed to read WebSocket message: %v", err)
 	}
 
-	// Parse the received WebSocket event
 	var event WebSocketEvent
 	if err := json.Unmarshal(message, &event); err != nil {
 		t.Fatalf("failed to unmarshal WebSocket message: %v", err)
 	}
 
-	if event.OrderID != createdOrder.OrderID {
-		t.Errorf("expected OrderID %v, got %v", createdOrder.OrderID, event.OrderID)
+	if event.OrderID != createdOrder.OrderID.String() {
+		t.Errorf("expected OrderID %v, got %v", createdOrder.OrderID.String(), event.OrderID)
 	}
 	if event.Status != "cooking" {
 		t.Errorf("expected status 'cooking', got '%s'", event.Status)
@@ -112,8 +107,8 @@ func TestWebSocketReceivesOrderUpdates(t *testing.T) {
 	}
 }
 
-// TestWebSocketConnectionWithClientID verifies that clients can connect with a client ID.
-func TestWebSocketConnectionWithClientID(t *testing.T) {
+// TestWebSocketConnectionWithOrderID verifies that clients can connect using an orderId.
+func TestWebSocketConnectionWithOrderID(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
 	router.Get("/ws", store.HandleWebSocket)
@@ -121,22 +116,22 @@ func TestWebSocketConnectionWithClientID(t *testing.T) {
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=client-123"
+	orderID := uuid.New().String()
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + orderID
 
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
-		t.Fatalf("failed to connect to WebSocket with clientId: %v", err)
+		t.Fatalf("failed to connect to WebSocket with orderId: %v", err)
 	}
 	defer conn.Close()
 
-	// Verify the client is registered with its ID
-	if !store.hub.HasClient("client-123") {
-		t.Error("expected client 'client-123' to be registered in the hub")
+	if !store.hub.HasClient(orderID) {
+		t.Error("expected connection to be registered for orderId")
 	}
 }
 
-// TestWebSocketConnectionWithoutClientIDIsRejected verifies connections without clientId are rejected.
-func TestWebSocketConnectionWithoutClientIDIsRejected(t *testing.T) {
+// TestWebSocketConnectionWithoutOrderIDIsRejected verifies connections without orderId are rejected.
+func TestWebSocketConnectionWithoutOrderIDIsRejected(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
 	router.Get("/ws", store.HandleWebSocket)
@@ -148,15 +143,16 @@ func TestWebSocketConnectionWithoutClientIDIsRejected(t *testing.T) {
 
 	_, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err == nil {
-		t.Fatal("expected connection to fail without clientId")
+		t.Fatal("expected connection to fail without orderId")
 	}
 	if resp != nil && resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status 400, got %d", resp.StatusCode)
 	}
 }
 
-// TestWebSocketBroadcastToSpecificClient verifies updates are sent to the correct client.
-func TestWebSocketBroadcastToSpecificClient(t *testing.T) {
+// TestWebSocketOnlyDeliversToMatchingOrder verifies that events are sent only to the
+// WebSocket connection registered for the matching orderId.
+func TestWebSocketOnlyDeliversToMatchingOrder(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
 	router.Post("/order", store.HandleCreateOrder)
@@ -166,66 +162,61 @@ func TestWebSocketBroadcastToSpecificClient(t *testing.T) {
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	// Connect client
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=client-abc"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-	if err != nil {
-		t.Fatalf("failed to connect: %v", err)
+	// Create two orders
+	makeOrder := func() Order {
+		body, _ := json.Marshal(CreateOrderRequest{OrderItems: []OrderItem{{PizzaType: "Margherita", Quantity: 1}}})
+		resp, _ := http.Post(server.URL+"/order", "application/json", bytes.NewReader(body))
+		defer resp.Body.Close()
+		var o Order
+		json.NewDecoder(resp.Body).Decode(&o)
+		return o
 	}
-	defer conn.Close()
+	order1 := makeOrder()
+	order2 := makeOrder()
 
-	// Create an order
-	orderReq := CreateOrderRequest{
-		OrderItems: []OrderItem{{PizzaType: "Margherita", Quantity: 1}},
-		OrderData:  "Client ID test",
+	// Connect each client with its own orderId
+	connect := func(orderID string) *websocket.Conn {
+		wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + orderID
+		conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+		if err != nil {
+			t.Fatalf("failed to connect for orderId %s: %v", orderID, err)
+		}
+		return conn
 	}
-	orderBody, _ := json.Marshal(orderReq)
-	resp, err := http.Post(server.URL+"/order", "application/json", bytes.NewReader(orderBody))
-	if err != nil {
-		t.Fatalf("failed to create order: %v", err)
-	}
-	defer resp.Body.Close()
+	conn1 := connect(order1.OrderID.String())
+	defer conn1.Close()
+	conn2 := connect(order2.OrderID.String())
+	defer conn2.Close()
 
-	var createdOrder Order
-	json.NewDecoder(resp.Body).Decode(&createdOrder)
-
-	// Send an event
-	eventReq := OrderEvent{
-		OrderID: createdOrder.OrderID,
+	// Send an event for order1 only
+	eventBody, _ := json.Marshal(OrderEvent{
+		OrderID: order1.OrderID.String(),
 		Status:  "cooking",
 		Source:  "kitchen",
-	}
-	eventBody, _ := json.Marshal(eventReq)
-	resp2, err := http.Post(server.URL+"/events", "application/json", bytes.NewReader(eventBody))
-	if err != nil {
-		t.Fatalf("failed to send event: %v", err)
-	}
-	defer resp2.Body.Close()
+	})
+	http.Post(server.URL+"/events", "application/json", bytes.NewReader(eventBody))
 
-	// Read the WebSocket event
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	_, message, err := conn.ReadMessage()
+	// conn1 should receive the event
+	conn1.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, msg, err := conn1.ReadMessage()
 	if err != nil {
-		t.Fatalf("failed to read WebSocket message: %v", err)
+		t.Fatalf("conn1 expected to receive event: %v", err)
 	}
-
 	var event WebSocketEvent
-	if err := json.Unmarshal(message, &event); err != nil {
-		t.Fatalf("failed to unmarshal WebSocket event: %v", err)
+	json.Unmarshal(msg, &event)
+	if event.Status != "cooking" {
+		t.Errorf("conn1 expected status 'cooking', got '%s'", event.Status)
 	}
 
-	if event.OrderID != createdOrder.OrderID {
-		t.Errorf("expected OrderID %v, got %v", createdOrder.OrderID, event.OrderID)
-	}
-	if event.Status != "cooking" {
-		t.Errorf("expected status 'cooking', got '%s'", event.Status)
-	}
-	if event.Source != "kitchen" {
-		t.Errorf("expected source 'kitchen', got '%s'", event.Source)
+	// conn2 should NOT receive any event (different order)
+	conn2.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
+	_, _, err = conn2.ReadMessage()
+	if err == nil {
+		t.Error("conn2 should not receive events for a different orderId")
 	}
 }
 
-// TestMultipleWebSocketClients verifies that multiple clients can receive updates.
+// TestMultipleWebSocketClients verifies that each client only receives events for its own order.
 func TestMultipleWebSocketClients(t *testing.T) {
 	store := NewStore()
 	router := chi.NewRouter()
@@ -236,9 +227,21 @@ func TestMultipleWebSocketClients(t *testing.T) {
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	// Connect two clients (with clientIds)
-	wsURL1 := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=multi-client-1"
-	wsURL2 := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?clientId=multi-client-2"
+	// Create two orders
+	makeOrder := func(pizzaType string) Order {
+		body, _ := json.Marshal(CreateOrderRequest{OrderItems: []OrderItem{{PizzaType: pizzaType, Quantity: 1}}})
+		resp, _ := http.Post(server.URL+"/order", "application/json", bytes.NewReader(body))
+		defer resp.Body.Close()
+		var o Order
+		json.NewDecoder(resp.Body).Decode(&o)
+		return o
+	}
+	order1 := makeOrder("Margherita")
+	order2 := makeOrder("Pepperoni")
+
+	// Connect clients keyed by their own orderId
+	wsURL1 := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + order1.OrderID.String()
+	wsURL2 := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?orderId=" + order2.OrderID.String()
 
 	conn1, _, err := websocket.DefaultDialer.Dial(wsURL1, nil)
 	if err != nil {
@@ -252,46 +255,35 @@ func TestMultipleWebSocketClients(t *testing.T) {
 	}
 	defer conn2.Close()
 
-	// Create an order
-	orderReq := CreateOrderRequest{
-		OrderItems: []OrderItem{{PizzaType: "Pepperoni", Quantity: 1}},
-		OrderData:  "Multi-client test",
-	}
-	orderBody, _ := json.Marshal(orderReq)
-	resp, _ := http.Post(server.URL+"/order", "application/json", bytes.NewReader(orderBody))
-	var createdOrder Order
-	json.NewDecoder(resp.Body).Decode(&createdOrder)
-	resp.Body.Close()
+	// Send event for order1
+	body1, _ := json.Marshal(OrderEvent{OrderID: order1.OrderID.String(), Status: "cooking", Source: "kitchen"})
+	http.Post(server.URL+"/events", "application/json", bytes.NewReader(body1))
 
-	// Send an event
-	eventReq := OrderEvent{
-		OrderID: createdOrder.OrderID,
-		Status:  "ready",
-		Source:  "kitchen",
-	}
-	eventBody, _ := json.Marshal(eventReq)
-	resp2, _ := http.Post(server.URL+"/events", "application/json", bytes.NewReader(eventBody))
-	resp2.Body.Close()
+	// Send event for order2
+	body2, _ := json.Marshal(OrderEvent{OrderID: order2.OrderID.String(), Status: "delivering", Source: "bikes"})
+	http.Post(server.URL+"/events", "application/json", bytes.NewReader(body2))
 
-	// Both clients should receive the update
+	// conn1 receives cooking event
 	conn1.SetReadDeadline(time.Now().Add(2 * time.Second))
-	conn2.SetReadDeadline(time.Now().Add(2 * time.Second))
-
 	_, msg1, err := conn1.ReadMessage()
 	if err != nil {
 		t.Fatalf("client 1 failed to read: %v", err)
 	}
+	var event1 WebSocketEvent
+	json.Unmarshal(msg1, &event1)
+	if event1.Status != "cooking" {
+		t.Errorf("client 1 expected status 'cooking', got '%s'", event1.Status)
+	}
 
+	// conn2 receives delivering event
+	conn2.SetReadDeadline(time.Now().Add(2 * time.Second))
 	_, msg2, err := conn2.ReadMessage()
 	if err != nil {
 		t.Fatalf("client 2 failed to read: %v", err)
 	}
-
-	var event1, event2 WebSocketEvent
-	json.Unmarshal(msg1, &event1)
+	var event2 WebSocketEvent
 	json.Unmarshal(msg2, &event2)
-
-	if event1.Status != "ready" || event2.Status != "ready" {
-		t.Error("both clients should receive 'ready' status")
+	if event2.Status != "delivering" {
+		t.Errorf("client 2 expected status 'delivering', got '%s'", event2.Status)
 	}
 }

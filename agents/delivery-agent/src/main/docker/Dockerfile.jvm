@@ -1,0 +1,37 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in JVM mode
+#
+# Before building the container image run:
+#
+# ./mvnw package
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/delivery-agent-jvm .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8089:8089 quarkus/delivery-agent-jvm
+#
+###
+FROM registry.access.redhat.com/ubi9/openjdk-21:1.23
+
+
+ENV LANGUAGE='en_US:en'
+
+
+# We make four distinct layers so if there are application changes the library layers can be re-used
+COPY --chown=185 agents/delivery-agent/target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=185 agents/delivery-agent/target/quarkus-app/*.jar /deployments/
+COPY --chown=185 agents/delivery-agent/target/quarkus-app/app/ /deployments/app/
+COPY --chown=185 agents/delivery-agent/target/quarkus-app/quarkus/ /deployments/quarkus/
+
+# Copy bikes skill scripts
+COPY --chown=185 skills/bikes/scripts/ /deployments/skills/bikes/scripts/
+
+EXPOSE 8089
+USER 185
+ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+
+ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Pizza Vibe is a Go-based pizza application ("vibecoded").
+Pizza Vibe is agentic pizza store, which uses Langchain4j, Quarkus and Dapr Workflows to provide a seamless experience for customers.
 
 ## Build and Run Commands
 
@@ -41,14 +41,14 @@ docker-compose down
 
 ## Architecture
 
-The Pizza application is composed by three services written in Go: 
-- Store service which exposes the APIs that will be consumed by the front-end. This service acts as the orchestrator for 
-    pizza orders between the Kitchen and Delivery Services.
-- Kitchen service which will be responsible cooking the pizzas. 
-- Delivery service which will be responsible for the delivery of the pizza to the customer.
+The Pizza application is composed of: 
+- Five services written in Go: bikes, drinks-stock, inventory, oven, store 
+- Three agents written in Java with Quarkus: cooking-agent, delivery-agent, store-mgmt-agent
+- MCP Server using Quarkus: pizza-mcp 
 
-The Store service must use Dapr Workflows to orchestrate the pizza order flow.
-The Kitchen and delivery services must use Dapr Pub/Sub to provide updates to the Store service.
+The front-end is written in React and the back-end is written in Go.
+
+
 
 ## Best practices
 

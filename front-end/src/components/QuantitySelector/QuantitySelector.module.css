@@ -1,0 +1,18 @@
+.quantitySelector {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-spacing-s);
+  padding: var(--space-spacing-s);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  border-radius: var(--corner-xl);
+}
+
+.quantity {
+  font-family: var(--type-heading-h3-font-family);
+  font-size: var(--type-heading-h3-font-size);
+  font-weight: var(--type-heading-h3-font-weight);
+  line-height: var(--type-heading-h3-line-height);
+  text-align: center;
+  min-width: var(--space-spacing-l);
+  color: var(--color-text-default);
+}

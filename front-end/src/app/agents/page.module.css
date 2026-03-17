@@ -1,0 +1,104 @@
+.page {
+  padding: var(--space-padding) 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-gap);
+}
+
+.title {
+  margin: 0;
+}
+
+.clearButton {
+  background-color: var(--color-background-secondary-default);
+  color: var(--color-text-inverted-default);
+  border: var(--border-width-default) solid var(--color-border-secondary-default);
+  border-radius: var(--corner-m);
+  padding: var(--space-spacing-s) var(--space-spacing-l);
+  font-family: var(--type-heading-h3-font-family);
+  font-size: var(--type-body-small-font-size);
+  font-weight: var(--type-heading-h3-font-weight);
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-gap);
+}
+
+.box {
+  border: var(--border-width-thick) solid var(--color-border-default);
+  border-radius: var(--corner-l);
+  padding: var(--space-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-spacing-l);
+}
+
+.boxHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-spacing-m);
+}
+
+.boxTitle {
+  flex: 1;
+}
+
+.emptyText {
+  color: var(--color-text-disabled);
+  font-family: var(--type-body-small-font-family);
+  font-size: var(--type-body-small-font-size);
+  line-height: var(--type-body-small-line-height);
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-spacing-s);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.eventRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-spacing-s);
+  padding: var(--space-spacing-s) var(--space-spacing-m);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--corner-m);
+}
+
+.eventKind {
+  font-size: var(--type-heading-h3-font-size);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.eventBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eventText {
+  font-family: var(--type-body-default-font-family);
+  font-size: var(--type-body-small-font-size);
+  font-weight: var(--type-body-small-font-weight);
+  line-height: var(--type-body-small-line-height);
+  color: var(--color-text-default);
+}
+
+.eventMeta {
+  font-family: var(--type-body-small-font-family);
+  font-size: var(--type-body-small-font-size);
+  line-height: var(--type-body-small-line-height);
+  color: var(--color-text-subtle);
+}
+

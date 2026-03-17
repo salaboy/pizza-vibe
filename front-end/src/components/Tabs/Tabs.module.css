@@ -1,0 +1,27 @@
+.tabs {
+  background-color: var(--color-background-subtle);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  border-radius: var(--corner-xl);
+  display: flex;
+  align-items: flex-start;
+  padding-top: var(--space-spacing-xxl);
+  width: 100%;
+}
+
+.buttonGroup {
+  display: flex;
+  flex: 1 0 0;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.buttonWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-spacing-s);
+  padding: var(--space-spacing-l);
+  background-color: var(--color-background-default);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  border-bottom: none;
+  border-radius: var(--corner-xl) var(--corner-xl) 0 0;
+}

@@ -3,30 +3,67 @@ package oven
 import (
 	"encoding/json"
 	"log/slog"
+	"math/rand"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 )
 
-// OvenService manages pizza ovens and provides HTTP handlers.
-type OvenService struct {
-	mu    sync.RWMutex
-	ovens map[string]*Oven
+// OvenServiceConfig holds configuration for the OvenService.
+type OvenServiceConfig struct {
+	MinReleaseDuration time.Duration
+	MaxReleaseDuration time.Duration
 }
 
-// NewOvenService creates a new OvenService instance with default ovens.
+// DefaultConfig returns the default configuration with 5-20 second release times.
+func DefaultConfig() OvenServiceConfig {
+	return OvenServiceConfig{
+		MinReleaseDuration: 5 * time.Second,
+		MaxReleaseDuration: 20 * time.Second,
+	}
+}
+
+// cookingState tracks when an oven was reserved and for how long.
+type cookingState struct {
+	reservedAt      time.Time
+	releaseDuration time.Duration
+}
+
+// OvenService manages pizza ovens and provides HTTP handlers.
+type OvenService struct {
+	mu           sync.RWMutex
+	ovens        map[string]*Oven
+	config       OvenServiceConfig
+	cookingState map[string]*cookingState
+}
+
+// NewOvenService creates a new OvenService instance with default ovens and config.
 func NewOvenService() *OvenService {
 	return &OvenService{
-		ovens: DefaultOvens(),
+		ovens:        DefaultOvens(),
+		config:       DefaultConfig(),
+		cookingState: make(map[string]*cookingState),
+	}
+}
+
+// NewOvenServiceWithConfig creates a new OvenService instance with custom config.
+func NewOvenServiceWithConfig(config OvenServiceConfig) *OvenService {
+	return &OvenService{
+		ovens:        DefaultOvens(),
+		config:       config,
+		cookingState: make(map[string]*cookingState),
 	}
 }
 
 // NewOvenServiceWithOvens creates a new OvenService instance with custom ovens.
 func NewOvenServiceWithOvens(ovens map[string]*Oven) *OvenService {
 	return &OvenService{
-		ovens: ovens,
+		ovens:        ovens,
+		config:       DefaultConfig(),
+		cookingState: make(map[string]*cookingState),
 	}
 }
 
@@ -35,6 +72,37 @@ func (s *OvenService) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ovens = DefaultOvens()
+	s.cookingState = make(map[string]*cookingState)
+}
+
+// randomReleaseDuration returns a random duration between min and max release times.
+func (s *OvenService) randomReleaseDuration() time.Duration {
+	minMs := s.config.MinReleaseDuration.Milliseconds()
+	maxMs := s.config.MaxReleaseDuration.Milliseconds()
+	randomMs := minMs + rand.Int63n(maxMs-minMs+1)
+	return time.Duration(randomMs) * time.Millisecond
+}
+
+// scheduleRelease releases an oven after the specified duration.
+func (s *OvenService) scheduleRelease(ovenID string, duration time.Duration) {
+	time.Sleep(duration)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	oven, ok := s.ovens[ovenID]
+	if !ok {
+		return
+	}
+
+	if oven.Status == StatusReserved {
+		previousUser := oven.User
+		oven.Status = StatusAvailable
+		oven.User = ""
+		oven.UpdatedAt = time.Now()
+		delete(s.cookingState, ovenID)
+		slog.Info("oven auto-released", "ovenId", ovenID, "previousUser", previousUser)
+	}
 }
 
 // HandleGetAll handles GET /ovens/ requests.
@@ -47,6 +115,9 @@ func (s *OvenService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 	for _, oven := range s.ovens {
 		ovenList = append(ovenList, *oven)
 	}
+	sort.Slice(ovenList, func(i, j int) bool {
+		return ovenList[i].ID < ovenList[j].ID
+	})
 
 	slog.Info("getting all ovens", "count", len(ovenList))
 
@@ -65,18 +136,31 @@ func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 
 	s.mu.RLock()
 	oven, ok := s.ovens[ovenID]
-	s.mu.RUnlock()
-
 	if !ok {
+		s.mu.RUnlock()
 		slog.Warn("oven not found", "ovenId", ovenID)
 		http.Error(w, "Oven not found", http.StatusNotFound)
 		return
 	}
 
-	slog.Info("getting oven", "ovenId", ovenID, "status", oven.Status)
+	// Compute progress for reserved ovens
+	resp := *oven
+	if oven.Status == StatusReserved {
+		if cs, exists := s.cookingState[ovenID]; exists {
+			elapsed := time.Since(cs.reservedAt)
+			pct := int(elapsed * 100 / cs.releaseDuration)
+			if pct > 99 {
+				pct = 99
+			}
+			resp.Progress = pct
+		}
+	}
+	s.mu.RUnlock()
+
+	slog.Info("getting oven", "ovenId", ovenID, "status", resp.Status, "progress", resp.Progress)
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(oven); err != nil {
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		slog.Error("failed to encode oven", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -115,9 +199,18 @@ func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
 	oven.Status = StatusReserved
 	oven.User = user
 	oven.UpdatedAt = time.Now()
+
+	// Schedule auto-release after random duration
+	releaseDuration := s.randomReleaseDuration()
+	s.cookingState[ovenID] = &cookingState{
+		reservedAt:      time.Now(),
+		releaseDuration: releaseDuration,
+	}
 	s.mu.Unlock()
 
-	slog.Info("oven reserved", "ovenId", ovenID, "user", user)
+	go s.scheduleRelease(ovenID, releaseDuration)
+
+	slog.Info("oven reserved", "ovenId", ovenID, "user", user, "releaseIn", releaseDuration)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(oven); err != nil {
@@ -127,40 +220,3 @@ func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleRelease handles DELETE /ovens/{ovenId} requests.
-// Releases a reserved oven, making it available again.
-// Returns 409 Conflict if oven is already available.
-func (s *OvenService) HandleRelease(w http.ResponseWriter, r *http.Request) {
-	ovenID := chi.URLParam(r, "ovenId")
-
-	s.mu.Lock()
-	oven, ok := s.ovens[ovenID]
-	if !ok {
-		s.mu.Unlock()
-		slog.Warn("oven not found for release", "ovenId", ovenID)
-		http.Error(w, "Oven not found", http.StatusNotFound)
-		return
-	}
-
-	if oven.Status == StatusAvailable {
-		s.mu.Unlock()
-		slog.Warn("oven already available", "ovenId", ovenID)
-		http.Error(w, "Oven is already available", http.StatusConflict)
-		return
-	}
-
-	previousUser := oven.User
-	oven.Status = StatusAvailable
-	oven.User = ""
-	oven.UpdatedAt = time.Now()
-	s.mu.Unlock()
-
-	slog.Info("oven released", "ovenId", ovenID, "previousUser", previousUser)
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(oven); err != nil {
-		slog.Error("failed to encode oven", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-}

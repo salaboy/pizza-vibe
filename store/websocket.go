@@ -7,29 +7,34 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 // OrderUpdate represents an order status update sent to WebSocket clients.
 type OrderUpdate struct {
-	OrderID uuid.UUID `json:"orderId"`
-	Status  string    `json:"status"`
-	Source  string    `json:"source"`
+	OrderID   string `json:"orderId"`
+	Status    string `json:"status"`
+	Source    string `json:"source"`
+	Message   string `json:"message,omitempty"`
+	ToolName  string `json:"toolName,omitempty"`
+	ToolInput string `json:"toolInput,omitempty"`
 }
 
 // WebSocketEvent represents the event format sent to frontend clients via WebSocket.
 type WebSocketEvent struct {
-	OrderID   uuid.UUID `json:"orderId"`
-	Status    string    `json:"status"`
-	Source    string    `json:"source"`
-	Timestamp string    `json:"timestamp"`
+	OrderID   string `json:"orderId"`
+	Status    string `json:"status"`
+	Source    string `json:"source"`
+	Timestamp string `json:"timestamp"`
+	Message   string `json:"message,omitempty"`
+	ToolName  string `json:"toolName,omitempty"`
+	ToolInput string `json:"toolInput,omitempty"`
 }
 
-// WebSocketHub manages WebSocket client connections and broadcasts messages.
+// WebSocketHub manages WebSocket client connections keyed by orderId.
 type WebSocketHub struct {
 	mu      sync.RWMutex
-	clients map[string]*websocket.Conn
+	clients map[string]*websocket.Conn // keyed by orderId
 }
 
 // NewWebSocketHub creates a new WebSocketHub instance.
@@ -39,37 +44,42 @@ func NewWebSocketHub() *WebSocketHub {
 	}
 }
 
-// AddClient registers a new WebSocket client connection with a client ID.
-func (h *WebSocketHub) AddClient(clientID string, conn *websocket.Conn) {
+// AddClient registers a WebSocket connection for the given orderId.
+func (h *WebSocketHub) AddClient(orderID string, conn *websocket.Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.clients[clientID] = conn
+	h.clients[orderID] = conn
 }
 
-// RemoveClient unregisters a WebSocket client connection by client ID.
-func (h *WebSocketHub) RemoveClient(clientID string) {
+// RemoveClient unregisters the WebSocket connection for the given orderId.
+func (h *WebSocketHub) RemoveClient(orderID string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	delete(h.clients, clientID)
+	delete(h.clients, orderID)
 }
 
-// HasClient checks if a client with the given ID is registered.
-func (h *WebSocketHub) HasClient(clientID string) bool {
+// HasClient reports whether there is an active connection for the given orderId.
+func (h *WebSocketHub) HasClient(orderID string) bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	_, exists := h.clients[clientID]
+	_, exists := h.clients[orderID]
 	return exists
 }
 
-// Broadcast sends a message to all connected WebSocket clients.
-func (h *WebSocketHub) Broadcast(message []byte) {
+// SendToOrder sends a message to the WebSocket connection registered for orderID.
+// If no connection exists for that order the message is silently dropped.
+func (h *WebSocketHub) SendToOrder(orderID string, message []byte) {
 	h.mu.RLock()
-	defer h.mu.RUnlock()
-	for clientID, conn := range h.clients {
-		err := conn.WriteMessage(websocket.TextMessage, message)
-		if err != nil {
-			slog.Error("websocket write error", "clientId", clientID, "error", err)
-		}
+	conn, exists := h.clients[orderID]
+	h.mu.RUnlock()
+
+	if !exists {
+		return
+	}
+
+	if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
+		slog.Error("websocket write error", "orderId", orderID, "error", err)
+		h.RemoveClient(orderID)
 	}
 }
 
@@ -80,12 +90,13 @@ var upgrader = websocket.Upgrader{
 }
 
 // HandleWebSocket handles WebSocket connection requests from frontend clients.
-// It upgrades the HTTP connection to WebSocket and registers the client
-// to receive order updates. Requires a clientId query parameter.
+// It upgrades the HTTP connection to WebSocket and registers the connection
+// keyed by the orderId query parameter so that only events for that order
+// are forwarded to this client.
 func (s *Store) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	clientID := r.URL.Query().Get("clientId")
-	if clientID == "" {
-		http.Error(w, "clientId query parameter is required", http.StatusBadRequest)
+	orderID := r.URL.Query().Get("orderId")
+	if orderID == "" {
+		http.Error(w, "orderId query parameter is required", http.StatusBadRequest)
 		return
 	}
 
@@ -95,15 +106,15 @@ func (s *Store) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.hub.AddClient(clientID, conn)
-	slog.Info("websocket client connected", "clientId", clientID)
+	s.hub.AddClient(orderID, conn)
+	slog.Info("websocket client connected", "orderId", orderID)
 
 	// Keep connection open and handle disconnection
 	go func() {
 		defer func() {
-			s.hub.RemoveClient(clientID)
+			s.hub.RemoveClient(orderID)
 			conn.Close()
-			slog.Info("websocket client disconnected", "clientId", clientID)
+			slog.Info("websocket client disconnected", "orderId", orderID)
 		}()
 
 		for {
@@ -115,19 +126,22 @@ func (s *Store) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-// BroadcastOrderUpdate sends an order update to all connected WebSocket clients
-// using the WebSocketEvent format.
+// BroadcastOrderUpdate sends an order update only to the WebSocket client
+// that is registered for the event's orderId.
 func (s *Store) BroadcastOrderUpdate(update OrderUpdate) {
 	event := WebSocketEvent{
 		OrderID:   update.OrderID,
 		Status:    update.Status,
 		Source:    update.Source,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Message:   update.Message,
+		ToolName:  update.ToolName,
+		ToolInput: update.ToolInput,
 	}
 	message, err := json.Marshal(event)
 	if err != nil {
 		slog.Error("failed to marshal websocket event", "error", err)
 		return
 	}
-	s.hub.Broadcast(message)
+	s.hub.SendToOrder(update.OrderID, message)
 }

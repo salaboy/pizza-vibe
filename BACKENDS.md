@@ -286,3 +286,164 @@ Requirements:
     - Implement a section in the inventory page to add more quantity to the items
 
 Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+## Improve oven service
+
+/ralph-loop:ralph-loop "Change the oven service behavior to lock oven based on time TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the oven/ directory
+- Make changes in code and tests to accept the username that is reserved the oven, make sure that this is included in the data model
+- When an oven is reserved it will remain reserved for a random amount of time between 5 and 20 seconds and then it will be released
+- Remove the endpoint to manually release an oven
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+## Connect Kitchen Service with Cooking Agent
+
+/ralph-loop:ralph-loop "Change the kitchen service to connect with cooking agent using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the kitchen/ directory
+- Make changes in code and tests to send a request to the cooking-agent for every pizza in the order
+  - Remove the logic to wait for every pizza in the order.
+  - Check the agents/cooking-agent directory to understand the data types for the request
+  - For each pizza cooked by the agent, emit an event to the store service
+  - When all the pizzas are cooked still send the DONE event 
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+## The Kitchen Service should receive Cooking Agent stream of updates and send them to the store
+
+/ralph-loop:ralph-loop "Change the kitchen service to connect with cooking agent using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the kitchen/ directory
+- Call the cooking agent service to the cook/stream endpoint
+- Make changes in code and tests to get the cooking agent stream of updates and send them to the store
+- For each pizza cooked by the agent, emit an event for every streamed update from the cooking agent.
+- When all the pizzas are cooked still send the DONE event
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+## The Frontend should show all the cooking updates received from the kitchen service 
+
+/ralph-loop:ralph-loop "Review the frontend data types to show updates coming from the kitchen using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Look for the code in the kitchen/ directory
+- Check the data types for the cooking update events and make sure that those are included in the frontend data model
+- Show the cooking updates in the frontend, including the parameters that were used
+- Avoid showing "tool_completed" without context
+- In the frontend, show the percentage of the cooking process completed
+- In the frontend, when an order is created keep it in the session storage, so the user can change pages and come back to the order
+  - Also keep the websocket open even when the user changes pages
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+
+## The Bikes service
+
+/ralph-loop:ralph-loop "Create the bikes service to reserve bikes using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Following the structure of the inventory service, create a bikes service to reserve bikes
+- The bikes service should expose the following endpoints:
+    - GET endpoint /bikes to return all the available bikes and their status
+    - GET endpoint /bikes/{bikeId} return the status of the bike
+    - POST endpoint /bikes/{bikeId} reserves and bike
+- To reserve a bike, the bike must be available and the user should be sent as a parameter
+- Each time that an operation is executed on a bike, the bike status should be updated and a timestamp should be recorded
+- The bikes service should return the following bike status:
+    - AVAILABLE: the bike is available to be reserved
+- When the bike is reserved it will automatically free itself after a random amount of time between 10 and 20 seconds
+- While the bike is reserved it should emit events to the store service reporting that the bike is on route to deliver a pizza order
+
+
+Output <promise>DONE</promise> when all tests green." --max-iterations 20 --completion-promise "DONE"
+
+
+# Make the oven service to stream back the cooking progress
+
+Update the oven service to stream back progress when cooking a pizza using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Looking at the code in the oven/ directory, make changes to the oven service to stream back the cooking progress
+- Change the data model to include the percentage of the cooking process completed when calling the HandleGetByID function
+    - If the oven is reserved, return the percentage of the cooking process completed based on releaseDuration for that specific oven
+    - If the oven is available, return 0
+- Update the Cooking agent to receive the percentage of the cooking process completed, so it can be sent to the kitchen service
+
+Output <promise>DONE</promise> when all tests green.
+
+## Implement SSE Channel between Bike tool and Delivery service
+
+
+Update the bike service to stream back progress when delivering an order using TDD.
+
+Process:
+1. Write failing test for next requirement
+2. Implement minimal code to pass
+3. Run tests
+4. If failing, fix and retry
+5. Refactor if needed
+6. Repeat for all requirements
+
+Requirements:
+- Looking at the code in the bikes/ directory, make changes to autoRelease function to stream back the delivery progress to the delivery service.
+- Create a data model to include the percentage of the delivery process completed
+- Follow a similar pattern implemented between the oven and kitchen service
+- The delivery service should send the percentage of the delivery process completed to the store service via events to they can be displayed in the frontend
+
+Output <promise>DONE</promise> when all tests green.

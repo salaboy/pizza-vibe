@@ -36,7 +36,6 @@ func main() {
 	r.Get("/ovens/", svc.HandleGetAll)
 	r.Get("/ovens/{ovenId}", svc.HandleGetByID)
 	r.Post("/ovens/{ovenId}", svc.HandleReserve)
-	r.Delete("/ovens/{ovenId}", svc.HandleRelease)
 
 	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

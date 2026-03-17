@@ -1,0 +1,94 @@
+:root {
+  /* Typography - Font Families */
+  --type-heading-h1-font-family: var(--font-knewave), cursive;
+  --type-heading-h2-font-family: var(--font-geist), sans-serif;
+  --type-heading-h3-font-family: var(--font-geist), sans-serif;
+  --type-body-default-font-family: var(--font-geist), sans-serif;
+  --type-body-default-bold-font-family: var(--font-geist), sans-serif;
+  --type-body-small-font-family: var(--font-geist), sans-serif;
+
+  /* Typography - Font Sizes */
+  --type-heading-h1-font-size: 70px;
+  --type-heading-h2-font-size: 28px;
+  --type-heading-h3-font-size: 20px;
+  --type-body-default-font-size: 20px;
+  --type-body-default-bold-font-size: 20px;
+  --type-body-small-font-size: 14px;
+
+  /* Typography - Font Weights */
+  --type-heading-h1-font-weight: 400;
+  --type-heading-h2-font-weight: 700;
+  --type-heading-h3-font-weight: 800;
+  --type-body-default-font-weight: 500;
+  --type-body-default-bold-font-weight: 700;
+  --type-body-small-font-weight: 500;
+
+  /* Typography - Line Heights */
+  --type-heading-h1-line-height: 80px;
+  --type-heading-h2-line-height: 36px;
+  --type-heading-h3-line-height: 24px;
+  --type-body-default-line-height: 32px;
+  --type-body-default-bold-line-height: 32px;
+  --type-body-small-line-height: 24px;
+
+  /* Colors - Text */
+  --color-text-default: #0c0d0d;
+  --color-text-subtle: #3b4943;
+  --color-text-primary-default: #045934;
+  --color-text-secondary-default: #8f1d06;
+  --color-text-tertiary-default: #8f7606;
+  --color-text-inverted-default: #ecf2ef;
+  --color-text-disabled: #9faaa5;
+
+  /* Colors - Background */
+  --color-background-default: #ecf2ef;
+  --color-background-subtle: #9faaa5;
+  --color-background-primary-default: #08b869;
+  --color-background-secondary-default: #b82508;
+  --color-background-tertiary-default: #f2d96b;
+  --color-background-inverted-default: #0c0d0d;
+  --color-background-inverted-subtle: #3b4943;
+  --color-background-disabled: #d0d9d5;
+
+  /* Colors - Border */
+  --color-border-default: #0c0d0d;
+  --color-border-subtle: #3b4943;
+  --color-border-primary-default: #045934;
+  --color-border-primary-subtle: #068f52;
+  --color-border-secondary-default: #591304;
+  --color-border-secondary-subtle: #b82508;
+  --color-border-disabled: #9faaa5;
+
+  /* Border Widths */
+  --border-width-thin: 1px;
+  --border-width-default: 2px;
+  --border-width-thick: 4px;
+  --border-width-thicker: 6px;
+
+  /* Spacing */
+  --space-padding: 48px;
+  --space-margin: 60px;
+  --space-gap: 48px;
+  --space-spacing-s: 8px;
+  --space-spacing-m: 16px;
+  --space-spacing-l: 24px;
+  --space-spacing-xl: 32px;
+  --space-spacing-xl-2: 40px;
+  --space-spacing-xl-3: 80px;
+  --space-spacing-xl-4: 120px;
+  --space-spacing-xl-5: 200px;
+
+  /* Corners (Border Radius) */
+  --corner-s: 8px;
+  --corner-m: 16px;
+  --corner-l: 24px;
+  --corner-xl: 40px;
+
+  /* Transitions */
+  --transition-flash: 0.6s ease-out;
+
+  /* Shadows */
+  --shadow-level-1: rgba(12, 13, 13, 0.2);
+  --shadow-level-1-y: 16px;
+  --shadow-level-1-blur: 4px;
+}

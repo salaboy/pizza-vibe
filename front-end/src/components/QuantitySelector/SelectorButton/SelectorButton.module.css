@@ -1,0 +1,55 @@
+.selectorButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-spacing-xxl);
+  height: var(--space-spacing-xxl);
+  border-radius: var(--corner-xl);
+  border: var(--border-width-thick) solid var(--color-border-default);
+  background-color: transparent;
+  cursor: pointer;
+  padding: 0;
+  color: var(--color-text-default);
+}
+
+/* Type: Default — Hover */
+.selectorButton.default:hover:not(:disabled) {
+  background-color: var(--color-background-subtle);
+}
+
+/* Type: Default — Active */
+.selectorButton.default:active:not(:disabled) {
+  background-color: var(--color-background-inverted-default);
+  color: var(--color-text-inverted-default);
+}
+
+/* Type: Default — Disabled */
+.selectorButton.default:disabled {
+  border-color: var(--color-border-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Type: Delete — Default */
+.selectorButton.delete {
+  background-color: var(--color-background-secondary-default);
+  border-color: var(--color-border-secondary-subtle);
+  color: var(--color-text-inverted-default);
+}
+
+/* Type: Delete — Hover */
+.selectorButton.delete:hover:not(:disabled) {
+  border-color: var(--color-border-secondary-default);
+}
+
+/* Type: Delete — Active */
+.selectorButton.delete:active:not(:disabled) {
+  border-color: var(--color-border-secondary-subtle);
+}
+
+/* Type: Delete — Disabled */
+.selectorButton.delete:disabled {
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-border-disabled);
+  cursor: not-allowed;
+}
