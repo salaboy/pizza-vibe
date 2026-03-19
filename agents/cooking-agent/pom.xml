@@ -19,6 +19,7 @@
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <a2a.version>1.0.0.Alpha4-SNAPSHOT</a2a.version>
     <protobuf.version>4.33.1</protobuf.version>
+    <quarkus-dapr-agentic.version>999-SNAPSHOT</quarkus-dapr-agentic.version>
   </properties>
 
   <dependencyManagement>
@@ -78,9 +79,14 @@
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-mcp</artifactId>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.quarkiverse.langchain4j</groupId>-->
+<!--      <artifactId>quarkus-langchain4j-agentic</artifactId>-->
+<!--    </dependency>-->
     <dependency>
-      <groupId>io.quarkiverse.langchain4j</groupId>
-      <artifactId>quarkus-langchain4j-agentic</artifactId>
+      <groupId>io.quarkiverse.dapr</groupId>
+      <artifactId>quarkus-agentic-dapr</artifactId>
+      <version>${quarkus-dapr-agentic.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

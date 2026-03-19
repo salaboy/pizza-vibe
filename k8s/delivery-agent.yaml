@@ -40,6 +40,12 @@ spec:
               value: grpc
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
+            - name: DAPR_HTTP_ENDPOINT
+              value: <YOUR DAPR HTTP ENDPOINT>
+            - name: DAPR_GRPC_ENDPOINT
+              value: <YOUR DAPR GRPC ENDPOINT>
+            - name: DAPR_API_TOKEN
+              value: <YOUR API TOKEN>
           livenessProbe:
             httpGet:
               path: /q/health
