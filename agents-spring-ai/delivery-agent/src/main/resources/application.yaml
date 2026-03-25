@@ -1,0 +1,21 @@
+server:
+  port: 8089
+
+spring:
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:test-key}
+      chat:
+        options:
+          model: claude-haiku-4-5-20251001
+
+bikes:
+  service:
+    url: ${BIKES_SERVICE_URL:http://localhost:8088}
+  skill:
+    scripts:
+      path: ${BIKES_SKILL_SCRIPTS_PATH:skills/bikes/scripts}
+
+store:
+  service:
+    url: ${STORE_SERVICE_URL:http://localhost:8080}

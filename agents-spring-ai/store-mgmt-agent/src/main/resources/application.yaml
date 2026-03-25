@@ -1,0 +1,30 @@
+server:
+  port: 9999
+
+spring:
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:test-key}
+      chat:
+        options:
+          model: claude-haiku-4-5-20251001
+    mcp:
+      client:
+        sse:
+          connections:
+            pizza-mcp:
+              url: ${PIZZA_MCP_URL:http://localhost:8086}
+
+cooking:
+  agent:
+    url: ${COOKING_AGENT_URL:http://localhost:8087}
+
+delivery:
+  agent:
+    url: ${DELIVERY_AGENT_URL:http://localhost:8089}
+
+store:
+  service:
+    url: ${STORE_SERVICE_URL:http://localhost:8080}
+  mgmt:
+    url: ${STORE_MGMT_AGENT_URL:http://localhost:9999}
