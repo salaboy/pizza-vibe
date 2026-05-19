@@ -3,6 +3,7 @@
 #
 # Binaries for programs and plugins
 .idea
+.DS_Store
 .deps
 *.exe
 *.exe~
