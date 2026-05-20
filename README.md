@@ -32,7 +32,7 @@ export DASH0_AUTH_TOKEN=<your-dash0-token>
 ./scripts/setup-kind.sh
 ```
 
-This script creates a KIND Kubernetes cluster, installs Dapr, PostgreSQL, the observability stack (OpenTelemetry + Jaeger), builds all service images, and deploys the full application.
+This script creates a KIND Kubernetes cluster, installs PostgreSQL, the observability stack (OpenTelemetry + Jaeger), builds all service images, and deploys the full application.
 
 ### Accessing the Application
 
@@ -59,7 +59,6 @@ The application follows a multi-agent architecture where a **React/Next.js front
 |---|---|
 | **A2A (Agent-to-Agent)** | Communication protocol between the Store Service and the AI agents |
 | **MCP (Model Context Protocol)** | Protocol used by agents to discover and invoke tools provided by the Go services |
-| **Dapr Workflows** | Orchestrates the end-to-end order lifecycle across agents and services |
 | **OpenTelemetry** | Distributed tracing and observability across all services (exported to Jaeger and optionally Dash0) |
 
 ## Services
@@ -71,7 +70,7 @@ The application follows a multi-agent architecture where a **React/Next.js front
 | **oven** | Go | Manages pizza ovens, tracks availability, and handles oven reservations for cooking |
 | **bikes** | Go | Manages a fleet of delivery bikes and handles bike reservations for deliveries |
 | **drinks-stock** | Go | Manages beverage inventory, stock levels, and drink acquisition |
-| **store-mgmt-agent** | Java (Quarkus) | AI agent that orchestrates the full order workflow using Dapr Workflows, coordinating between cooking and delivery agents |
+| **store-mgmt-agent** | Java (Quarkus) | AI agent that orchestrates the full order workflow, coordinating between cooking and delivery agents |
 | **cooking-agent** | Java (Quarkus) | AI agent that handles pizza preparation — acquires ingredients, reserves ovens, and manages cooking |
 | **delivery-agent** | Java (Quarkus) | AI agent that handles delivery logistics — reserves bikes and manages the delivery process |
 | **pizza-mcp** | Java (Quarkus) | MCP server that exposes inventory, oven, bike, and drinks-stock tools for agents to use |

@@ -17,7 +17,6 @@
     <quarkus-langchain4j.version>1.7.1</quarkus-langchain4j.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
-    <quarkus-dapr-agentic.version>999-SNAPSHOT</quarkus-dapr-agentic.version>
     <protobuf.version>4.33.1</protobuf.version>
     <a2a.version>1.0.0.Alpha4-SNAPSHOT</a2a.version>
   </properties>
@@ -35,6 +34,13 @@
         <groupId>io.quarkiverse.langchain4j</groupId>
         <artifactId>quarkus-langchain4j-bom</artifactId>
         <version>${quarkus-langchain4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.github.a2asdk</groupId>
+        <artifactId>a2a-java-sdk-bom</artifactId>
+        <version>${a2a.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -77,21 +83,16 @@
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-mcp</artifactId>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>io.quarkiverse.langchain4j</groupId>-->
-<!--      <artifactId>quarkus-langchain4j-agentic</artifactId>-->
-<!--      <version>${quarkus-langchain4j.version}</version>-->
-<!--    </dependency>-->
     <dependency>
-      <groupId>io.quarkiverse.dapr</groupId>
-      <artifactId>quarkus-agentic-dapr</artifactId>
-      <version>${quarkus-dapr-agentic.version}</version>
+      <groupId>io.quarkiverse.langchain4j</groupId>
+      <artifactId>quarkus-langchain4j-agentic</artifactId>
+      <version>${quarkus-langchain4j.version}</version>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>dev.langchain4j</groupId>-->
-<!--      <artifactId>langchain4j-agentic-a2a</artifactId>-->
-<!--      <version>1.11.0-beta19-a2a1</version>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-agentic-a2a</artifactId>
+      <version>1.11.0-beta19-a2a1</version>
+    </dependency>
     <dependency>
       <groupId>io.github.a2asdk</groupId>
       <artifactId>a2a-java-sdk-http-client-vertx</artifactId>

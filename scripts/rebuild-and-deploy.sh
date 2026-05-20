@@ -45,21 +45,6 @@ fi
 echo ""
 
 # -------------------------------------------------------
-# 3. Clone and build quarkus-agentic-dapr dependency
-# -------------------------------------------------------
-echo "--- Building quarkus-agentic-dapr dependency ---"
-AGENTIC_DAPR_DIR="$PROJECT_ROOT/.deps/quarkus-agentic-dapr"
-if [ -d "$AGENTIC_DAPR_DIR" ]; then
-  echo "quarkus-agentic-dapr already cloned, pulling latest changes..."
-  (cd "$AGENTIC_DAPR_DIR" && git pull)
-else
-  mkdir -p "$PROJECT_ROOT/.deps"
-  git clone https://github.com/salaboy/quarkus-agentic-dapr "$AGENTIC_DAPR_DIR"
-fi
-(cd "$AGENTIC_DAPR_DIR" && mvn clean install -DskipTests)
-echo ""
-
-# -------------------------------------------------------
 # 2. Build agent services (Maven)
 # -------------------------------------------------------
 echo "--- Building agent services with Maven ---"

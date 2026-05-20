@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Quick rebuild & deploy: skips building external Java dependencies
-# (a2a-java, langchain4j, quarkus-agentic-dapr).
+# (a2a-java, langchain4j).
 # Use the full rebuild-and-deploy.sh if you need to rebuild those.
 
 CLUSTER_NAME="${CLUSTER_NAME:-pizza-vibe}"
@@ -12,7 +12,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 echo "=== Pizza Vibe - Quick Rebuild & Deploy ==="
 echo "Project root: $PROJECT_ROOT"
 echo "KIND cluster: $CLUSTER_NAME"
-echo "(Skipping a2a-java, langchain4j, quarkus-agentic-dapr builds)"
+echo "(Skipping a2a-java, langchain4j builds)"
 echo ""
 
 # -------------------------------------------------------

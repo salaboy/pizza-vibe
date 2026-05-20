@@ -113,11 +113,6 @@ kubectl apply -f "$OBSERVABILITY_DIR/instrumentation.yaml"
 echo "Instrumentation resource applied."
 echo ""
 
-echo "--- Applying Dapr Tracing Configuration ---"
-kubectl apply -f "$OBSERVABILITY_DIR/dapr-tracing.yaml"
-echo "Dapr Tracing Configuration applied."
-echo ""
-
 echo "=== Observability setup complete ==="
 echo ""
 echo "To access Jaeger UI:"

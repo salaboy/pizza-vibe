@@ -20,7 +20,7 @@ export ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_API_KEY>
 ./scripts/setup-kind.sh
 ```
 
-The script is idempotent — it skips steps that are already completed (existing cluster, Dapr already installed, etc.).
+The script is idempotent — it skips steps that are already completed (existing cluster, PostgreSQL already installed, etc.).
 
 ## 1. Create a KIND Cluster
 
@@ -34,34 +34,16 @@ Verify the cluster is running:
 kubectl cluster-info --context kind-pizza-vibe
 ```
 
-## 2. Install Dapr
+## 2. Install PostgreSQL
 
-The `store-mgmt-agent` service relies on Dapr for workflow orchestration. Install Dapr using Helm:
-
-```bash
-helm repo add dapr https://dapr.github.io/helm-charts/
-helm repo update
-helm install dapr dapr/dapr --namespace dapr-system --create-namespace --wait
-```
-
-Verify Dapr is running:
-
-```bash
-kubectl get pods -n dapr-system
-```
-
-You should see `dapr-operator`, `dapr-sidecar-injector`, `dapr-sentry`, and `dapr-placement-server` pods in a `Running` state.
-
-## 3. Install PostgreSQL
-
-The `store-mgmt-agent` uses Dapr workflows which require an actor state store backed by PostgreSQL. Install it using Helm:
+The store service uses PostgreSQL to persist orders and events. Install it using Helm:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 helm install postgresql bitnami/postgresql \
   --set auth.postgresPassword=postgres \
-  --set auth.database=dapr_store \
+  --set auth.database=store-db \
   --wait
 ```
 
@@ -71,22 +53,7 @@ Verify PostgreSQL is running:
 kubectl get pods -l app.kubernetes.io/name=postgresql
 ```
 
-## 4. Clone and Build `quarkus-agentic-dapr`
-
-The `store-mgmt-agent` depends on the [quarkus-agentic-dapr](https://github.com/salaboy/quarkus-agentic-dapr) library which is not published to a public Maven repository. You must clone and install it locally before building the agents:
-
-```bash
-git clone https://github.com/salaboy/quarkus-agentic-dapr .deps/quarkus-agentic-dapr
-cd .deps/quarkus-agentic-dapr && mvn clean install -DskipTests && cd ../..
-```
-
-If you have already cloned it, pull the latest changes and rebuild:
-
-```bash
-cd .deps/quarkus-agentic-dapr && git pull && mvn clean install -DskipTests && cd ../..
-```
-
-## 5. Build the Agent Services (Maven)
+## 4. Build the Agent Services (Maven)
 
 The Java/Quarkus agent services under `agents/` must be packaged before building their Docker images. From the project root, run:
 
@@ -97,7 +64,7 @@ cd agents/delivery-agent && ./mvnw clean package -DskipTests && cd ../..
 cd agents/store-mgmt-agent && ./mvnw clean package -DskipTests && cd ../..
 ```
 
-## 6. Build and Load Container Images
+## 5. Build and Load Container Images
 
 Since KIND runs containers inside Docker, you need to build the images locally and then load them into the KIND cluster.
 
@@ -134,7 +101,7 @@ kind load docker-image pizza-vibe-delivery-agent:latest --name pizza-vibe
 kind load docker-image pizza-vibe-store-mgmt-agent:latest --name pizza-vibe
 ```
 
-## 7. Create Secrets
+## 6. Create Secrets
 
 The `delivery-agent` requires an Anthropic API key. Create the secret before deploying:
 
@@ -142,7 +109,7 @@ The `delivery-agent` requires an Anthropic API key. Create the secret before dep
 kubectl create secret generic anthropic-secret --from-literal=api-key=<YOUR_ANTHROPIC_API_KEY>
 ```
 
-## 8. Deploy the Application
+## 7. Deploy the Application
 
 Apply all Kubernetes manifests:
 
@@ -156,7 +123,7 @@ Verify all pods are running:
 kubectl get pods
 ```
 
-## 9. Access the Application
+## 8. Access the Application
 
 Port-forward the store service to access it from your browser:
 
@@ -179,7 +146,7 @@ kubectl port-forward svc/postgresql 5432:5432
 Then connect using:
 
 ```bash
-psql postgres://postgres:postgres@localhost:5432/dapr_store
+psql postgres://postgres:postgres@localhost:5432/store-db
 ```
 
 ## Services
@@ -194,7 +161,7 @@ psql postgres://postgres:postgres@localhost:5432/dapr_store
 | bikes            | 8088 | Delivery bikes service                   |
 | delivery-agent   | 8089 | AI-powered delivery agent (Quarkus)      |
 | drinks-stock     | 8090 | Drinks stock management service          |
-| store-mgmt-agent | 9999 | Store management agent with Dapr (Quarkus) |
+| store-mgmt-agent | 9999 | Store management agent (Quarkus) |
 
 ## Cleanup
 

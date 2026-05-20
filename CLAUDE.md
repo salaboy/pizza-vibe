@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Pizza Vibe is agentic pizza store, which uses Langchain4j, Quarkus and Dapr Workflows to provide a seamless experience for customers.
+Pizza Vibe is agentic pizza store, which uses Langchain4j, Quarkus and A2A to provide a seamless experience for customers.
 
 ## Build and Run Commands
 

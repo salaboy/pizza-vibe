@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=pizza_store
+      - POSTGRES_DB=store-db
     networks:
       - pizza-network
     healthcheck:
@@ -28,7 +28,7 @@ services:
       - BIKES_SERVICE_URL=http://bikes:8088
       - DRINKS_STOCK_SERVICE_URL=http://drinks-stock:8090
       - STORE_MGMT_AGENT_URL=http://docker.for.mac.host.internal:9999
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/pizza_store?sslmode=disable
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/store-db?sslmode=disable
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,22 +158,26 @@ services:
       timeout: 10s
       retries: 3
 
-# This doesn't work because it requires Dapr to be running
-#  store-mgmt-agent:
-#    build:
-#      context: ./agents/store-mgmt-agent
-#      dockerfile: src/main/docker/Dockerfile.jvm
-#    ports:
-#      - "9999:9999"
-#    environment:
-#      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-#    networks:
-#      - pizza-network
-#    healthcheck:
-#      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9999/q/health"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
+  store-mgmt-agent:
+    build:
+      context: ./agents/store-mgmt-agent
+      dockerfile: src/main/docker/Dockerfile.jvm
+    ports:
+      - "9999:9999"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PIZZA_MCP_URL=http://pizza-mcp:8086/mcp/sse
+      - COOKING_AGENT_URL=http://cooking-agent:8087
+      - DELIVERY_AGENT_URL=http://delivery-agent:8089
+      - STORE_SERVICE_URL=http://store:8080
+      - STORE_MGMT_AGENT_URL=http://store-mgmt-agent:9999
+    networks:
+      - pizza-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9999/q/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   pizza-network:

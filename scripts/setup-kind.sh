@@ -42,24 +42,9 @@ kubectl cluster-info --context "kind-${CLUSTER_NAME}"
 echo ""
 
 # -------------------------------------------------------
-# 2. Install Dapr
+# 2. Install PostgreSQL
 # -------------------------------------------------------
-echo "--- Step 2: Installing Dapr ---"
-helm repo add dapr https://dapr.github.io/helm-charts/ 2>/dev/null || true
-helm repo update
-if helm status dapr -n dapr-system &>/dev/null; then
-  echo "Dapr is already installed, skipping."
-else
-  helm install dapr dapr/dapr --namespace dapr-system --version=1.17.0 --create-namespace --wait
-fi
-echo "Dapr pods:"
-kubectl get pods -n dapr-system
-echo ""
-
-# -------------------------------------------------------
-# 3. Install PostgreSQL
-# -------------------------------------------------------
-echo "--- Step 3: Installing PostgreSQL ---"
+echo "--- Step 2: Installing PostgreSQL ---"
 helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
 helm repo update
 if helm status postgresql &>/dev/null; then
@@ -67,7 +52,7 @@ if helm status postgresql &>/dev/null; then
 else
   helm install postgresql bitnami/postgresql \
     --set auth.postgresPassword=postgres \
-    --set auth.database=dapr_store \
+    --set auth.database=store-db \
     --wait
 fi
 echo "PostgreSQL pods:"
@@ -75,9 +60,9 @@ kubectl get pods -l app.kubernetes.io/name=postgresql
 echo ""
 
 # -------------------------------------------------------
-# 4. Create secrets
+# 3. Create secrets
 # -------------------------------------------------------
-echo "--- Step 4: Creating secrets ---"
+echo "--- Step 3: Creating secrets ---"
 kubectl create secret generic anthropic-secret \
   --from-literal=api-key="$ANTHROPIC_API_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -85,12 +70,12 @@ echo "Secret 'anthropic-secret' created."
 echo ""
 
 # -------------------------------------------------------
-# 5. Install Observability stack
+# 4. Install Observability stack
 # -------------------------------------------------------
 "$SCRIPT_DIR/setup-observability.sh"
 
 # -------------------------------------------------------
-# 6. Build, load images, and deploy
+# 5. Build, load images, and deploy
 # -------------------------------------------------------
 export CLUSTER_NAME
 "$SCRIPT_DIR/rebuild-and-deploy.sh"
@@ -105,4 +90,4 @@ echo "Then open http://localhost:16686"
 echo ""
 echo "To access PostgreSQL from outside the cluster:"
 echo "  kubectl port-forward svc/postgresql 5432:5432"
-echo "  psql postgres://postgres:postgres@localhost:5432/dapr_store"
+echo "  psql postgres://postgres:postgres@localhost:5432/store-db"
