@@ -46,7 +46,7 @@ jobs:
       - name: Build langchain4j fork
         run: |
           git clone -b 1.11.0-beta19-patched https://github.com/salaboy/langchain4j /tmp/langchain4j
-          cd /tmp/langchain4j && mvn clean install -DskipTests -q
+          cd /tmp/langchain4j && mvn clean install -DskipTests -q -pl '!langchain4j-jlama'
 
       # -------------------------------------------------------
       # Build Quarkus agent services
