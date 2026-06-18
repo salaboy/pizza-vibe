@@ -18,8 +18,8 @@ spec:
     spec:
       containers:
         - name: cooking-agent
-          image: pizza-vibe-cooking-agent:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-cooking-agent:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8087
           env:

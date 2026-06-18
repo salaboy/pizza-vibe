@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: inventory
-          image: pizza-vibe-inventory:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-inventory:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8084
           env:

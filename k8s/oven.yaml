@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: oven
-          image: pizza-vibe-oven:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-oven:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8085
           env:

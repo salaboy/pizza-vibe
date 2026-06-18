@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: store
-          image: pizza-vibe-store:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-store:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

@@ -18,8 +18,8 @@ spec:
     spec:
       containers:
         - name: delivery-agent
-          image: pizza-vibe-delivery-agent:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-delivery-agent:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8089
           env:

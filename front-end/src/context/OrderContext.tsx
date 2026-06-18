@@ -71,7 +71,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
   const connectWebSocket = useCallback((orderId: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const storeWsUrl = process.env.NEXT_PUBLIC_STORE_WS_URL || 'ws://localhost:8080';
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const storeWsUrl = process.env.NEXT_PUBLIC_STORE_WS_URL || `${wsProtocol}//${window.location.host}`;
       const wsUrl = `${storeWsUrl}/ws?orderId=${orderId}`;
       const ws = new WebSocket(wsUrl);
 

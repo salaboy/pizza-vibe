@@ -5,7 +5,7 @@ import Chat, { ChatMessage } from '@/components/Chat';
 import { useOrder } from '@/context/OrderContext';
 import styles from './page.module.css';
 
-const STORE_SERVICE_URL = process.env.NEXT_PUBLIC_STORE_SERVICE_URL || 'http://localhost:8080';
+const STORE_SERVICE_URL = process.env.NEXT_PUBLIC_STORE_SERVICE_URL || '';
 
 // Extract a UUID from text (used to detect orderId in bot responses)
 function extractOrderId(text: string): string | null {
@@ -245,6 +245,7 @@ export default function ChatPage() {
 
   return (
     <main className={styles.page}>
+      <a href="/agents-dash">Agents Dashboard</a>
       <Chat
         messages={messages}
         inputValue={inputValue}

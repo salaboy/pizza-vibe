@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: bikes
-          image: pizza-vibe-bikes:latest
-          imagePullPolicy: IfNotPresent
+          image: salaboy/pizza-vibe-bikes:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8088
           env:
