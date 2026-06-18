@@ -260,7 +260,7 @@ echo ""
 # 7. Expose the store service via LoadBalancer
 # -------------------------------------------------------
 echo "--- Step 7: Exposing store service via LoadBalancer ---"
-kubectl patch svc store -p '{"spec":{"type":"LoadBalancer"}}'
+kubectl patch svc store -p '{"spec":{"type":"LoadBalancer","ports":[{"port":80,"targetPort":8080,"protocol":"TCP"}]}}'
 
 echo "Waiting for the store LoadBalancer to receive an external IP (this can take ~60s)..."
 STORE_IP=""
@@ -275,11 +275,11 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 if [ -n "$STORE_IP" ]; then
-  echo "Store UI:   http://$STORE_IP:8080"
+  echo "Store UI:   http://$STORE_IP"
 else
   echo "Store external IP not yet assigned. Check with:"
   echo "  kubectl get svc store"
-  echo "Then open: http://<EXTERNAL-IP>:8080"
+  echo "Then open: http://<EXTERNAL-IP>"
 fi
 echo ""
 echo "Jaeger UI (port-forward):"
