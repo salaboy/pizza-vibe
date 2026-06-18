@@ -257,16 +257,28 @@ kubectl get pods
 echo ""
 
 # -------------------------------------------------------
-# 7. Expose the store service via LoadBalancer
+# 7. Expose all services via LoadBalancer
 # -------------------------------------------------------
-echo "--- Step 7: Exposing store service via LoadBalancer ---"
-kubectl patch svc store -p '{"spec":{"type":"LoadBalancer","ports":[{"port":80,"targetPort":8080,"protocol":"TCP"}]}}'
+echo "--- Step 7: Exposing services via LoadBalancer ---"
 
-echo "Waiting for the store LoadBalancer to receive an external IP (this can take ~60s)..."
-STORE_IP=""
+# store: port 80 → 8080 (--type=merge replaces the ports array entirely)
+kubectl patch svc store --type=merge \
+  -p '{"spec":{"type":"LoadBalancer","ports":[{"port":80,"targetPort":8080,"protocol":"TCP"}]}}'
+
+# all other services: keep their own port, just change type
+for SVC in bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp; do
+  kubectl patch svc "$SVC" --type=merge -p '{"spec":{"type":"LoadBalancer"}}'
+done
+
+echo "Waiting for LoadBalancer IPs to be assigned (this can take ~60s)..."
+ALL_SVCS="store bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp"
 for i in $(seq 1 18); do
-  STORE_IP="$(kubectl get svc store -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
-  [ -n "$STORE_IP" ] && break
+  ALL_READY=true
+  for SVC in $ALL_SVCS; do
+    IP="$(kubectl get svc "$SVC" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+    [ -z "$IP" ] && ALL_READY=false && break
+  done
+  "$ALL_READY" && break
   echo "  ... attempt $i/18, retrying in 10s"
   sleep 10
 done
@@ -274,13 +286,16 @@ done
 echo ""
 echo "=== Setup complete ==="
 echo ""
-if [ -n "$STORE_IP" ]; then
-  echo "Store UI:   http://$STORE_IP"
-else
-  echo "Store external IP not yet assigned. Check with:"
-  echo "  kubectl get svc store"
-  echo "Then open: http://<EXTERNAL-IP>"
-fi
+echo "External service endpoints:"
+for SVC in $ALL_SVCS; do
+  IP="$(kubectl get svc "$SVC" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+  PORT="$(kubectl get svc "$SVC" -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || true)"
+  if [ -n "$IP" ]; then
+    echo "  $SVC: http://$IP:$PORT"
+  else
+    echo "  $SVC: IP not yet assigned (kubectl get svc $SVC)"
+  fi
+done
 echo ""
 echo "Jaeger UI (port-forward):"
 echo "  kubectl port-forward svc/jaeger-query 16686"

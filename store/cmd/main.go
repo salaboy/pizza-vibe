@@ -77,7 +77,6 @@ func main() {
 	r.Post("/agents-events", s.HandleAgentEvent)
 	r.Get("/agents-events", s.HandleGetAgentEvents)
 	r.Delete("/agents-events", s.HandleDeleteAgentEvents)
-	r.Post("/chat", s.HandleChat)
 
 	// WebSocket endpoint
 	r.Get("/ws", s.HandleWebSocket)

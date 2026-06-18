@@ -7,6 +7,16 @@ import styles from './page.module.css';
 
 const STORE_SERVICE_URL = process.env.NEXT_PUBLIC_STORE_SERVICE_URL || '';
 
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
 // Extract a UUID from text (used to detect orderId in bot responses)
 function extractOrderId(text: string): string | null {
   const match = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
@@ -19,7 +29,7 @@ export default function ChatPage() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [inputDisabled, setInputDisabled] = useState(false);
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const sessionIdRef = useRef<string>(generateUUID());
   const trackedOrderIdRef = useRef<string | null>(null);
 
   const { setOrderId, events, connectWebSocket } = useOrder();
