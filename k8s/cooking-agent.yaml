@@ -31,7 +31,7 @@ spec:
             - name: PIZZA_MCP_URL
               value: "http://pizza-mcp:8086/mcp/sse"
             - name: STORE_SERVICE_URL
-              value: "http://store:8080"
+              value: "http://store:80"
             - name: OTEL_JAVAAGENT_ENABLED
               value: "false"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL

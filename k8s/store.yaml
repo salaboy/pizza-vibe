@@ -61,7 +61,8 @@ spec:
   selector:
     app: store
   ports:
-    - port: 8080
+    - name: http
+      port: 80
       targetPort: 8080
       protocol: TCP
   type: ClusterIP

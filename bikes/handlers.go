@@ -40,7 +40,7 @@ func NewBikeService() *BikeService {
 	return &BikeService{
 		bikes:           DefaultBikes(),
 		releaseDuration: defaultReleaseDuration,
-		storeURL:        "http://store:8080",
+		storeURL:        "http://store:80",
 		httpClient:      &http.Client{Timeout: 10 * time.Second},
 	}
 }

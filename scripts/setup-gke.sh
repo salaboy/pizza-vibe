@@ -261,12 +261,8 @@ echo ""
 # -------------------------------------------------------
 echo "--- Step 7: Exposing services via LoadBalancer ---"
 
-# store: port 80 → 8080 (--type=merge replaces the ports array entirely)
-kubectl patch svc store --type=merge \
-  -p '{"spec":{"type":"LoadBalancer","ports":[{"port":80,"targetPort":8080,"protocol":"TCP"}]}}'
-
-# all other services: keep their own port, just change type
-for SVC in bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp; do
+# all services: keep their own port, just change type
+for SVC in store bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp; do
   kubectl patch svc "$SVC" --type=merge -p '{"spec":{"type":"LoadBalancer"}}'
 done
 

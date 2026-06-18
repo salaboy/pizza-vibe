@@ -28,7 +28,7 @@ spec:
             - name: OVEN_SERVICE_URL
               value: "http://oven:8085"
             - name: STORE_SERVICE_URL
-              value: "http://store:8080"
+              value: "http://store:80"
             - name: DRINKS_STOCK_SERVICE_URL
               value: "http://drinks-stock:8090"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
