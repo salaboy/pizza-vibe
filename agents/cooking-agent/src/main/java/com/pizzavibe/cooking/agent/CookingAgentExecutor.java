@@ -1,14 +1,10 @@
 package com.pizzavibe.cooking.agent;
 
-import com.pizzavibe.cooking.model.OrderItem;
 import io.a2a.server.agentexecution.AgentExecutor;
 import io.a2a.server.agentexecution.RequestContext;
-import io.a2a.server.tasks.AgentEmitter;
-import io.a2a.spec.A2AError;
-import io.a2a.spec.Message;
-import io.a2a.spec.Part;
-import io.a2a.spec.TextPart;
-import io.a2a.spec.UnsupportedOperationError;
+import io.a2a.server.events.EventQueue;
+import io.a2a.server.tasks.TaskUpdater;
+import io.a2a.spec.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -30,26 +26,27 @@ public class CookingAgentExecutor {
     public AgentExecutor agentExecutor(CookingAgent cookingAgent) {
         return new AgentExecutor() {
             @Override
-            public void execute(RequestContext context, AgentEmitter emitter) throws A2AError {
+            public void execute(RequestContext context, EventQueue eventQueue) throws JSONRPCError {
                 System.out.println("🍕 ========================================");
                 System.out.println("🍕 REMOTE A2A Cooking AGENT CALLED!");
                 System.out.println("🍕 ========================================");
 
+                TaskUpdater updater = new TaskUpdater(context, eventQueue);
                 if (context.getTask() == null) {
-                    emitter.submit();
+                    updater.submit();
                 }
-                emitter.startWork();
+                updater.startWork();
 
                 List<String> inputs = new ArrayList<>();
 
                 // Process the request message
                 Message message = context.getMessage();
-                System.out.println("📨 Processing message with " + (message.parts() != null ? message.parts().size() : 0) + " parts");
-                if (message.parts() != null) {
-                    for (Part<?> part : message.parts()) {
+                System.out.println("📨 Processing message with " + (message.getParts() != null ? message.getParts().size() : 0) + " parts");
+                if (message.getParts() != null) {
+                    for (Part<?> part : message.getParts()) {
                         if (part instanceof TextPart textPart) {
-                            System.out.println("💬 Text part: " + textPart.text());
-                            inputs.add(textPart.text());
+                            System.out.println("💬 Text part: " + textPart.getText());
+                            inputs.add(textPart.getText());
                         }
                     }
                 }
@@ -69,12 +66,12 @@ public class CookingAgentExecutor {
                 // Return the result
                 TextPart responsePart = new TextPart(agentResponse, null);
                 List<Part<?>> parts = List.of(responsePart);
-                emitter.addArtifact(parts, null, null, null);
-                emitter.complete();
+                updater.addArtifact(parts, null, null, null);
+                updater.complete();
             }
 
             @Override
-            public void cancel(RequestContext context, AgentEmitter emitter) throws A2AError {
+            public void cancel(RequestContext context, EventQueue eventQueue) throws JSONRPCError {
                 throw new UnsupportedOperationError();
             }
         };

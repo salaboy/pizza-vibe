@@ -17,23 +17,23 @@ public class CookingAgentCard {
     @Produces
     @PublicAgentCard
     public AgentCard agentCard() {
-        return AgentCard.builder()
+        return new AgentCard.Builder()
                 .name("Cooking Agent")
                 .description("Cooks pizza using the inventory and oven services via MCP.")
                 .version("1.0.0")
-                .capabilities(AgentCapabilities.builder()
+                .capabilities(new AgentCapabilities.Builder()
                         .streaming(true)
                         .pushNotifications(false)
                         .build())
                 .defaultInputModes(List.of("text"))
                 .defaultOutputModes(List.of("text"))
-                .skills(List.of(AgentSkill.builder()
+                .skills(List.of(new AgentSkill.Builder()
                                 .id("cooking")
                                 .name("Cooking agent")
                                 .description("Cooks pizza using the inventory and oven services via MCP.")
                                 .tags(List.of("cook", "pizza"))
                                 .build()))
-                .supportedInterfaces(List.of(
+                .additionalInterfaces(List.of(
                         new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://cooking-agent:8087/")))
                 .build();
     }

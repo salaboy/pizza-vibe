@@ -17,23 +17,23 @@ public class DeliveryAgentCard {
     @Produces
     @PublicAgentCard
     public AgentCard agentCard() {
-        return AgentCard.builder()
+        return new AgentCard.Builder()
                 .name("Delivery Agent")
                 .description("Delivery orders using the bikes skill.")
                 .version("1.0.0")
-                .capabilities(AgentCapabilities.builder()
+                .capabilities(new AgentCapabilities.Builder()
                         .streaming(true)
                         .pushNotifications(false)
                         .build())
                 .defaultInputModes(List.of("text"))
                 .defaultOutputModes(List.of("text"))
-                .skills(List.of(AgentSkill.builder()
+                .skills(List.of(new AgentSkill.Builder()
                                 .id("delivery")
                                 .name("Delivery agent")
                                 .description("Delivers orders using the bikes skill.")
                                 .tags(List.of("deliver", "pizza"))
                                 .build()))
-                .supportedInterfaces(List.of(
+                .additionalInterfaces(List.of(
                         new AgentInterface(TransportProtocol.JSONRPC.asString(), "http://delivery-agent:8089/")))
                 .build();
     }
