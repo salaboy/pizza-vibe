@@ -19,6 +19,7 @@ public class DeliveryAgentCard {
     public AgentCard agentCard() {
         return new AgentCard.Builder()
                 .name("Delivery Agent")
+                .url("http://delivery-agent:8089/")  // required by 0.3.2.Final AgentCard.Builder
                 .description("Delivery orders using the bikes skill.")
                 .version("1.0.0")
                 .capabilities(new AgentCapabilities.Builder()

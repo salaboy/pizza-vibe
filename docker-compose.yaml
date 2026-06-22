@@ -80,6 +80,7 @@ services:
       - "8088:8088"
     environment:
       - PORT=8088
+      - STORE_URL=http://store:8080
     networks:
       - pizza-network
     healthcheck:
@@ -104,6 +105,23 @@ services:
       timeout: 10s
       retries: 3
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "13133:13133"
+    environment:
+      - DASH0_AUTH_TOKEN=${DASH0_AUTH_TOKEN}
+      - DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME=${DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME:-ingress.eu-west-1.aws.dash0.com}
+      - DASH0_ENDPOINT_OTLP_GRPC_PORT=${DASH0_ENDPOINT_OTLP_GRPC_PORT:-4317}
+      - DASH0_DATASET=${DASH0_DATASET:-salaboy}
+    networks:
+      - pizza-network
+
   pizza-mcp:
     build:
       context: ./agents/pizza-mcp
@@ -115,6 +133,9 @@ services:
       - OVEN_SERVICE_URL=http://oven:8085
       - STORE_SERVICE_URL=http://store:8080
       - DRINKS_STOCK_SERVICE_URL=http://drinks-stock:8090
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - otel-collector
     networks:
       - pizza-network
     healthcheck:
@@ -132,6 +153,10 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - PIZZA_MCP_URL=http://pizza-mcp:8086/mcp/sse
+      - STORE_SERVICE_URL=http://store:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - otel-collector
     networks:
       - pizza-network
     healthcheck:
@@ -150,6 +175,10 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - BIKES_SERVICE_URL=http://bikes:8088
       - BIKES_SKILL_SCRIPTS_PATH=/deployments/skills/bikes/scripts
+      - STORE_SERVICE_URL=http://store:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - otel-collector
     networks:
       - pizza-network
     healthcheck:
@@ -171,6 +200,9 @@ services:
       - DELIVERY_AGENT_URL=http://delivery-agent:8089
       - STORE_SERVICE_URL=http://store:8080
       - STORE_MGMT_AGENT_URL=http://store-mgmt-agent:9999
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - otel-collector
     networks:
       - pizza-network
     healthcheck:

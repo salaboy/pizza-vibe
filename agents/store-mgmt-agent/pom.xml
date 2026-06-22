@@ -13,13 +13,12 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.36.2</quarkus.platform.version>
-    <quarkus-langchain4j.version>1.11.0</quarkus-langchain4j.version>
+    <quarkus.platform.version>3.36.3</quarkus.platform.version>
+    <quarkus-langchain4j.version>1.10.0</quarkus-langchain4j.version>
 
     <!-- <quarkus-langchain4j.version>1.7.1</quarkus-langchain4j.version> -->
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
-    <protobuf.version>4.33.1</protobuf.version>
     <!-- <a2a.version>1.0.0.Alpha4-SNAPSHOT</a2a.version> -->
   </properties>
 
@@ -48,16 +47,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency> -->
-      <dependency>
-        <groupId>com.google.protobuf</groupId>
-        <artifactId>protobuf-java</artifactId>
-        <version>${protobuf.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.protobuf</groupId>
-        <artifactId>protobuf-java-util</artifactId>
-        <version>${protobuf.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -91,6 +80,11 @@
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-agentic</artifactId>
       <!-- <version>${quarkus-langchain4j.version}</version> -->
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.langchain4j</groupId>
+      <artifactId>quarkus-langchain4j-agentic-deployment</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>dev.langchain4j</groupId>
