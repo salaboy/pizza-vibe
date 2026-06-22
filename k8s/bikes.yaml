@@ -26,6 +26,8 @@ spec:
           env:
             - name: PORT
               value: "8088"
+            - name: STORE_URL
+              value: "http://store:80"
           livenessProbe:
             httpGet:
               path: /health
