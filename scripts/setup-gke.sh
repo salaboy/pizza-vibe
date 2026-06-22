@@ -141,6 +141,12 @@ else
   helm install otel-collector open-telemetry/opentelemetry-collector \
     --namespace opentelemetry -f "$COLLECTOR_VALUES" --wait
 fi
+# Force a pod restart so updated secret values (endpoint, dataset, token) are reloaded.
+COLLECTOR_DEPLOY=$(kubectl get deployment -n opentelemetry \
+  -l app.kubernetes.io/name=opentelemetry-collector \
+  -o jsonpath='{.items[0].metadata.name}')
+kubectl rollout restart deployment/"$COLLECTOR_DEPLOY" -n opentelemetry
+kubectl rollout status deployment/"$COLLECTOR_DEPLOY" -n opentelemetry --timeout=120s
 kubectl get pods -n opentelemetry -l app.kubernetes.io/name=opentelemetry-collector
 echo ""
 
