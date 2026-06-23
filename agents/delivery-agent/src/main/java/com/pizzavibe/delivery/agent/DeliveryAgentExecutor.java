@@ -1,13 +1,13 @@
 package com.pizzavibe.delivery.agent;
 
-import io.a2a.server.agentexecution.AgentExecutor;
-import io.a2a.server.agentexecution.RequestContext;
-import io.a2a.server.tasks.AgentEmitter;
-import io.a2a.spec.A2AError;
-import io.a2a.spec.Message;
-import io.a2a.spec.Part;
-import io.a2a.spec.TextPart;
-import io.a2a.spec.UnsupportedOperationError;
+import org.a2aproject.sdk.server.agentexecution.AgentExecutor;
+import org.a2aproject.sdk.server.agentexecution.RequestContext;
+import org.a2aproject.sdk.server.tasks.AgentEmitter;
+import org.a2aproject.sdk.spec.A2AError;
+import org.a2aproject.sdk.spec.Message;
+import org.a2aproject.sdk.spec.Part;
+import org.a2aproject.sdk.spec.TextPart;
+import org.a2aproject.sdk.spec.UnsupportedOperationError;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
