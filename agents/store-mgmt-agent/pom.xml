@@ -18,7 +18,7 @@
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <protobuf.version>4.33.1</protobuf.version>
-    <a2a.version>1.0.0.Alpha4-SNAPSHOT</a2a.version>
+    <a2a.version>1.0.1.Final-SNAPSHOT</a2a.version>
   </properties>
 
   <dependencyManagement>
@@ -38,7 +38,7 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>io.github.a2asdk</groupId>
+        <groupId>org.a2aproject.sdk</groupId>
         <artifactId>a2a-java-sdk-bom</artifactId>
         <version>${a2a.version}</version>
         <type>pom</type>
@@ -90,20 +90,20 @@
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-agentic-a2a</artifactId>
-      <version>1.11.0-beta19-a2a1</version>
+      <version>1.11.0-beta19-patched</version>
     </dependency>
     <dependency>
-      <groupId>io.github.a2asdk</groupId>
+      <groupId>org.a2aproject.sdk</groupId>
       <artifactId>a2a-java-sdk-http-client-vertx</artifactId>
       <version>${a2a.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.a2asdk</groupId>
+      <groupId>org.a2aproject.sdk</groupId>
       <artifactId>a2a-java-sdk-opentelemetry-client</artifactId>
       <version>${a2a.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.github.a2asdk</groupId>
+      <groupId>org.a2aproject.sdk</groupId>
       <artifactId>a2a-java-sdk-opentelemetry-client-propagation</artifactId>
       <version>${a2a.version}</version>
     </dependency>
