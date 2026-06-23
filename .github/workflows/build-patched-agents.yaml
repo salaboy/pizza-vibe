@@ -84,7 +84,7 @@ jobs:
         id: build-delivery
         uses: docker/build-push-action@v6
         with:
-          context: agents/delivery-agent
+          context: .
           file: agents/delivery-agent/src/main/docker/Dockerfile.jvm
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.REGISTRY }}/pizza-vibe-delivery-agent,push-by-digest=true,name-canonical=true,push=true
