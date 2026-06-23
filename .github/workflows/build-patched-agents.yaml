@@ -12,9 +12,22 @@ env:
   TAG: patched-a2a-tracing
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
+      - name: Prepare platform tag
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -23,6 +36,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: maven
 
       - name: Build salaboy/a2a-java
         run: |
@@ -48,9 +62,6 @@ jobs:
       - name: Build pizza-mcp
         run: cd agents/pizza-mcp && ./mvnw package -DskipTests -q
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -61,37 +72,97 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push cooking-agent
+        id: build-cooking
         uses: docker/build-push-action@v6
         with:
           context: agents/cooking-agent
           file: agents/cooking-agent/src/main/docker/Dockerfile.jvm
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/pizza-vibe-cooking-agent:${{ env.TAG }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY }}/pizza-vibe-cooking-agent,push-by-digest=true,name-canonical=true,push=true
 
       - name: Build and push delivery-agent
+        id: build-delivery
         uses: docker/build-push-action@v6
         with:
           context: agents/delivery-agent
           file: agents/delivery-agent/src/main/docker/Dockerfile.jvm
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/pizza-vibe-delivery-agent:${{ env.TAG }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY }}/pizza-vibe-delivery-agent,push-by-digest=true,name-canonical=true,push=true
 
       - name: Build and push store-mgmt-agent
+        id: build-store-mgmt
         uses: docker/build-push-action@v6
         with:
           context: agents/store-mgmt-agent
           file: agents/store-mgmt-agent/src/main/docker/Dockerfile.jvm
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/pizza-vibe-store-mgmt-agent:${{ env.TAG }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY }}/pizza-vibe-store-mgmt-agent,push-by-digest=true,name-canonical=true,push=true
 
       - name: Build and push pizza-mcp
+        id: build-pizza-mcp
         uses: docker/build-push-action@v6
         with:
           context: agents/pizza-mcp
           file: agents/pizza-mcp/src/main/docker/Dockerfile.jvm
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/pizza-vibe-pizza-mcp:${{ env.TAG }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY }}/pizza-vibe-pizza-mcp,push-by-digest=true,name-canonical=true,push=true
+
+      - name: Collect digests
+        run: |
+          mkdir -p /tmp/digests/cooking-agent /tmp/digests/delivery-agent /tmp/digests/store-mgmt-agent /tmp/digests/pizza-mcp
+          digest="${{ steps.build-cooking.outputs.digest }}"; touch "/tmp/digests/cooking-agent/${digest#sha256:}"
+          digest="${{ steps.build-delivery.outputs.digest }}"; touch "/tmp/digests/delivery-agent/${digest#sha256:}"
+          digest="${{ steps.build-store-mgmt.outputs.digest }}"; touch "/tmp/digests/store-mgmt-agent/${digest#sha256:}"
+          digest="${{ steps.build-pizza-mcp.outputs.digest }}"; touch "/tmp/digests/pizza-mcp/${digest#sha256:}"
+
+      - name: Upload digests
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: [build]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest for cooking-agent
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/pizza-vibe-cooking-agent:${{ env.TAG }} \
+            $(cd /tmp/digests/cooking-agent && printf "${{ env.REGISTRY }}/pizza-vibe-cooking-agent@sha256:%s " *)
+
+      - name: Create manifest for delivery-agent
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/pizza-vibe-delivery-agent:${{ env.TAG }} \
+            $(cd /tmp/digests/delivery-agent && printf "${{ env.REGISTRY }}/pizza-vibe-delivery-agent@sha256:%s " *)
+
+      - name: Create manifest for store-mgmt-agent
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/pizza-vibe-store-mgmt-agent:${{ env.TAG }} \
+            $(cd /tmp/digests/store-mgmt-agent && printf "${{ env.REGISTRY }}/pizza-vibe-store-mgmt-agent@sha256:%s " *)
+
+      - name: Create manifest for pizza-mcp
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/pizza-vibe-pizza-mcp:${{ env.TAG }} \
+            $(cd /tmp/digests/pizza-mcp && printf "${{ env.REGISTRY }}/pizza-vibe-pizza-mcp@sha256:%s " *)
