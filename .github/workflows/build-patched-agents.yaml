@@ -24,16 +24,16 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Build salaboy/langchain4j (1.11.0-beta19-patched)
-        run: |
-          git clone --branch 1.11.0-beta19-patched --depth 1 https://github.com/salaboy/langchain4j.git /tmp/langchain4j
-          cd /tmp/langchain4j
-          mvn install -DskipTests -q
-
       - name: Build salaboy/a2a-java
         run: |
           git clone --depth 1 https://github.com/salaboy/a2a-java.git /tmp/a2a-java
           cd /tmp/a2a-java
+          mvn install -DskipTests -q
+
+      - name: Build salaboy/langchain4j (1.11.0-beta19-patched)
+        run: |
+          git clone --branch 1.11.0-beta19-patched --depth 1 https://github.com/salaboy/langchain4j.git /tmp/langchain4j
+          cd /tmp/langchain4j
           mvn install -DskipTests -q
 
       - name: Build cooking-agent
