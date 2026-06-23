@@ -48,7 +48,7 @@ jobs:
         run: |
           git clone --branch 1.11.0-beta19-patched --depth 1 https://github.com/salaboy/langchain4j.git /tmp/langchain4j
           cd /tmp/langchain4j
-          mvn install -DskipTests -q
+          mvn install -DskipTests -q -pl '!langchain4j-jlama'
 
       - name: Build cooking-agent
         run: cd agents/cooking-agent && ./mvnw package -DskipTests -q
