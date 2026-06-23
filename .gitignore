@@ -19,7 +19,7 @@ target/
 coverage.*
 *.coverprofile
 profile.cov
-
+.deps
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
