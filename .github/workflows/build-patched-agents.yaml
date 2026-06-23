@@ -1,0 +1,97 @@
+name: Build and publish agents (patched-a2a-tracing)
+
+on:
+  push:
+    branches: [patched-a2a-tracing]
+    paths:
+      - 'agents/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: salaboy
+  TAG: patched-a2a-tracing
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build salaboy/langchain4j (1.11.0-beta19-patched)
+        run: |
+          git clone --branch 1.11.0-beta19-patched --depth 1 https://github.com/salaboy/langchain4j.git /tmp/langchain4j
+          cd /tmp/langchain4j
+          mvn install -DskipTests -q
+
+      - name: Build salaboy/a2a-java
+        run: |
+          git clone --depth 1 https://github.com/salaboy/a2a-java.git /tmp/a2a-java
+          cd /tmp/a2a-java
+          mvn install -DskipTests -q
+
+      - name: Build cooking-agent
+        run: cd agents/cooking-agent && ./mvnw package -DskipTests -q
+
+      - name: Build delivery-agent
+        run: cd agents/delivery-agent && ./mvnw package -DskipTests -q
+
+      - name: Build store-mgmt-agent
+        run: cd agents/store-mgmt-agent && ./mvnw package -DskipTests -q
+
+      - name: Build pizza-mcp
+        run: cd agents/pizza-mcp && ./mvnw package -DskipTests -q
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push cooking-agent
+        uses: docker/build-push-action@v6
+        with:
+          context: agents/cooking-agent
+          file: agents/cooking-agent/src/main/docker/Dockerfile.jvm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/pizza-vibe-cooking-agent:${{ env.TAG }}
+
+      - name: Build and push delivery-agent
+        uses: docker/build-push-action@v6
+        with:
+          context: agents/delivery-agent
+          file: agents/delivery-agent/src/main/docker/Dockerfile.jvm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/pizza-vibe-delivery-agent:${{ env.TAG }}
+
+      - name: Build and push store-mgmt-agent
+        uses: docker/build-push-action@v6
+        with:
+          context: agents/store-mgmt-agent
+          file: agents/store-mgmt-agent/src/main/docker/Dockerfile.jvm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/pizza-vibe-store-mgmt-agent:${{ env.TAG }}
+
+      - name: Build and push pizza-mcp
+        uses: docker/build-push-action@v6
+        with:
+          context: agents/pizza-mcp
+          file: agents/pizza-mcp/src/main/docker/Dockerfile.jvm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/pizza-vibe-pizza-mcp:${{ env.TAG }}
