@@ -1,8 +1,8 @@
-name: Build and publish store
+name: Build and publish store (patched-a2a-tracing)
 
 on:
   push:
-    branches: [main]
+    branches: [patched-a2a-tracing]
     paths:
       - 'store/**'
       - 'front-end/**'
@@ -11,6 +11,7 @@ on:
 env:
   REGISTRY: salaboy
   IMAGE: pizza-vibe-store
+  TAG: patched-a2a-tracing
 
 jobs:
   build:
@@ -67,12 +68,7 @@ jobs:
   merge:
     needs: [build]
     runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -91,21 +87,6 @@ jobs:
 
       - name: Create manifest list and push
         run: |
-          set -euo pipefail
-          CURRENT=$(cat store/VERSION | tr -d '[:space:]')
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-
           docker buildx imagetools create \
-            -t "${{ env.REGISTRY }}/${{ env.IMAGE }}:${VERSION}" \
-            -t "${{ env.REGISTRY }}/${{ env.IMAGE }}:latest" \
+            -t "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.TAG }}" \
             $(cd /tmp/digests && printf "${{ env.REGISTRY }}/${{ env.IMAGE }}@sha256:%s " *)
-
-          echo "$VERSION" > store/VERSION
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add store/VERSION
-          git commit -m "release store"
-          git pull --rebase
-          git push
