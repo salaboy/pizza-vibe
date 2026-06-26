@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: delivery-agent
-          image: salaboy/pizza-vibe-delivery-agent:latest
+          image: salaboy/pizza-vibe-delivery-agent:patched-a2a-tracing
           imagePullPolicy: Always
           ports:
             - containerPort: 8089

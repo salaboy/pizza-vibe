@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: store-mgmt-agent
-          image: salaboy/pizza-vibe-store-mgmt-agent:latest
+          image: salaboy/pizza-vibe-store-mgmt-agent:patched-a2a-tracing
           imagePullPolicy: Always
           ports:
             - containerPort: 9999

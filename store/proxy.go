@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -12,6 +13,16 @@ import (
 	"sort"
 	"strings"
 )
+
+// Dash0Config holds the runtime configuration injected into the front-end HTML
+// so the Dash0 Web SDK can connect to the right endpoint without baking values
+// into the static bundle at image build time.
+type Dash0Config struct {
+	EndpointURL string `json:"endpointUrl"`
+	AuthToken   string `json:"authToken"`
+	ServiceName string `json:"serviceName"`
+	Environment string `json:"environment"`
+}
 
 // ServiceProxy returns an http.Handler that reverse-proxies requests to targetURL.
 // The incoming request path is forwarded as-is to the target.
@@ -130,7 +141,39 @@ func DrinksStockListHandler(drinksStockURL string) http.HandlerFunc {
 // and falls back to index.html for SPA-style routing.
 // If the directory does not exist (e.g. local dev mode), it returns a handler
 // that passes through to the next handler (404).
-func StaticFileHandler(dir string) http.HandlerFunc {
+// When dash0 is non-nil and has a non-empty EndpointURL, the handler injects
+// window.__DASH0_CONFIG__ into every HTML response so the browser-side SDK can
+// read runtime config without it being baked into the static bundle at image
+// build time.
+func StaticFileHandler(dir string, dash0 *Dash0Config) http.HandlerFunc {
+	// Pre-compute the injection snippet once at startup.
+	var configScript []byte
+	if dash0 != nil && dash0.EndpointURL != "" && dash0.AuthToken != "" {
+		b, _ := json.Marshal(dash0)
+		configScript = []byte(`<script>window.__DASH0_CONFIG__=` + string(b) + `</script>`)
+	}
+
+	// serveHTML reads an HTML file, injects the config script before </head>,
+	// and writes the result. Falls back to a plain 404 if the file can't be read.
+	serveHTML := func(w http.ResponseWriter, path string) {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		modified := bytes.Replace(content, []byte("</head>"), append(configScript, []byte("</head>")...), 1)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(modified)
+	}
+
+	serve := func(w http.ResponseWriter, r *http.Request, path string) {
+		if len(configScript) > 0 && strings.HasSuffix(path, ".html") {
+			serveHTML(w, path)
+		} else {
+			http.ServeFile(w, r, path)
+		}
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if static dir exists
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -146,7 +189,7 @@ func StaticFileHandler(dir string) http.HandlerFunc {
 		// Try exact file path
 		fullPath := filepath.Join(dir, filepath.Clean(path))
 		if _, err := os.Stat(fullPath); err == nil {
-			http.ServeFile(w, r, fullPath)
+			serve(w, r, fullPath)
 			return
 		}
 
@@ -154,7 +197,7 @@ func StaticFileHandler(dir string) http.HandlerFunc {
 		if !strings.Contains(filepath.Base(path), ".") {
 			htmlPath := fullPath + ".html"
 			if _, err := os.Stat(htmlPath); err == nil {
-				http.ServeFile(w, r, htmlPath)
+				serve(w, r, htmlPath)
 				return
 			}
 		}
@@ -162,7 +205,7 @@ func StaticFileHandler(dir string) http.HandlerFunc {
 		// SPA fallback: serve index.html for unknown paths
 		indexPath := filepath.Join(dir, "index.html")
 		if _, err := os.Stat(indexPath); err == nil {
-			http.ServeFile(w, r, indexPath)
+			serve(w, r, indexPath)
 			return
 		}
 

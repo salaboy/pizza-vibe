@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: cooking-agent
-          image: salaboy/pizza-vibe-cooking-agent:latest
+          image: salaboy/pizza-vibe-cooking-agent:patched-a2a-tracing
           imagePullPolicy: Always
           ports:
             - containerPort: 8087

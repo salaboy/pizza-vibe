@@ -38,6 +38,16 @@ spec:
               value: "http://store-mgmt-agent:9999"
             - name: DATABASE_URL
               value: "postgres://postgres:postgres@postgresql.default.svc.cluster.local:5432/store-db?sslmode=disable"
+            - name: DASH0_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dash0-secrets
+                  key: dash0-authorization-token
+            - name: DASH0_ENDPOINT_HTTP_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: dash0-secrets
+                  key: dash0-grpc-hostname
           livenessProbe:
             httpGet:
               path: /health

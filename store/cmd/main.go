@@ -122,8 +122,21 @@ func main() {
 		api.Post("/drinks-stock/{item}/add", proxyTo(drinksStockURL, "/drinks-stock"))
 	})
 
+	// Dash0 Web SDK runtime config — injected into HTML responses at serve time
+	// so the static bundle stays environment-agnostic. Hostname comes from the
+	// shared dash0-secrets K8s secret (same key used by the OTEL collector).
+	dash0Hostname := os.Getenv("DASH0_ENDPOINT_HTTP_HOSTNAME")
+	dash0 := &store.Dash0Config{
+		AuthToken:   os.Getenv("DASH0_AUTH_TOKEN"),
+		ServiceName: getEnvOrDefault("DASH0_SERVICE_NAME", "pizza-vibe-frontend"),
+		Environment: getEnvOrDefault("DASH0_ENVIRONMENT", "production"),
+	}
+	if dash0Hostname != "" {
+		dash0.EndpointURL = "https://" + dash0Hostname
+	}
+
 	// Static file serving (catch-all for exported Next.js front-end)
-	r.NotFound(store.StaticFileHandler("./static"))
+	r.NotFound(store.StaticFileHandler("./static", dash0))
 
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
@@ -154,6 +167,13 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("store service stopped")
+}
+
+func getEnvOrDefault(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 // proxyTo returns a handler that proxies the request to the given backend service.

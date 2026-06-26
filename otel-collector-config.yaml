@@ -7,6 +7,26 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  filter:
+    traces:
+      span:
+        - attributes["url.path"] == "/health"
+        - attributes["url.path"] == "/q/health"
+        - IsMatch(name, ".*health.*")
+
+  filter/drop_mcp_transport:
+    error_mode: ignore
+    traces:
+      span:
+        - |
+          kind == SPAN_KIND_CLIENT and
+          name == "POST" and
+          attributes["server.address"] == "pizza-mcp"
+        - |
+          resource.attributes["service.name"] == "pizza-mcp" and
+          kind == SPAN_KIND_SERVER and
+          attributes["http.route"] == "/mcp/messages/:id"
+
   batch:
     timeout: 10s
     send_batch_size: 1024
@@ -29,7 +49,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter, filter/drop_mcp_transport, batch]
       exporters: [otlp/dash0]
 
     metrics:
