@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: store
-          image: salaboy/pizza-vibe-store:latest
+          image: salaboy/pizza-vibe-store:patched-a2a-tracing
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

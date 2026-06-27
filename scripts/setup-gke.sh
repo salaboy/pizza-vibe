@@ -127,6 +127,14 @@ if [ -n "${DASH0_AUTH_TOKEN:-}" ]; then
     --from-literal=dash0-dataset="$DASH0_DATASET" \
     --namespace=opentelemetry \
     --dry-run=client -o yaml | kubectl apply -f -
+  # Also create in default namespace so the store deployment can read it.
+  kubectl create secret generic dash0-secrets \
+    --from-literal=dash0-authorization-token="$DASH0_AUTH_TOKEN" \
+    --from-literal=dash0-grpc-hostname="$DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME" \
+    --from-literal=dash0-grpc-port="$DASH0_ENDPOINT_OTLP_GRPC_PORT" \
+    --from-literal=dash0-dataset="$DASH0_DATASET" \
+    --namespace=default \
+    --dry-run=client -o yaml | kubectl apply -f -
   echo "Dash0 secrets applied. Collector will export to Jaeger + Dash0."
   COLLECTOR_VALUES="$OBSERVABILITY_DIR/collector-config.yaml"
 else
