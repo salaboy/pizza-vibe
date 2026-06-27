@@ -14,7 +14,7 @@ spec:
       labels:
         app: cooking-agent
       annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
+        # instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
     spec:
       containers:
         - name: cooking-agent
@@ -32,8 +32,8 @@ spec:
               value: "http://pizza-mcp:8086/mcp/sse"
             - name: STORE_SERVICE_URL
               value: "http://store:80"
-            - name: OTEL_JAVAAGENT_ENABLED
-              value: "false"
+            # - name: OTEL_JAVAAGENT_ENABLED
+            #   value: "false"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

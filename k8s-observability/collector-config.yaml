@@ -57,14 +57,15 @@ config:
       error_mode: ignore
       traces:
         span:
-          - |
-            kind == SPAN_KIND_CLIENT and
-            name == "POST" and
-            attributes["server.address"] == "pizza-mcp"
+          # Drop only the SSE subscribe/poll GET requests on pizza-mcp.
+          # Actual MCP tool-call POSTs (which carry the work) are kept.
           - |
             resource.attributes["service.name"] == "pizza-mcp" and
             kind == SPAN_KIND_SERVER and
-            attributes["http.route"] == "/mcp/messages/:id"
+            attributes["http.route"] == "/mcp/messages/:id" and
+            attributes["http.request.method"] == "GET" and
+            attributes["gen_ai.tool.name"] == nil and
+            attributes["gen_ai.operation.name"] == nil
 
     batch:
       timeout: 10s

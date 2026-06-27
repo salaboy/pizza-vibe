@@ -271,24 +271,17 @@ kubectl get pods
 echo ""
 
 # -------------------------------------------------------
-# 7. Expose all services via LoadBalancer
+# 7. Wait for the store LoadBalancer IP
 # -------------------------------------------------------
-echo "--- Step 7: Exposing services via LoadBalancer ---"
+# The store service is the single public entry point — it serves the
+# static front-end and proxies all /api/* calls to internal services.
+# All other services use ClusterIP (cluster-internal only).
+echo "--- Step 7: Waiting for store LoadBalancer IP ---"
 
-# all services: keep their own port, just change type
-for SVC in store bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp; do
-  kubectl patch svc "$SVC" --type=merge -p '{"spec":{"type":"LoadBalancer"}}'
-done
-
-echo "Waiting for LoadBalancer IPs to be assigned (this can take ~60s)..."
-ALL_SVCS="store bikes cooking-agent drinks-stock delivery-agent inventory oven store-mgmt-agent pizza-mcp"
+echo "Waiting for store LoadBalancer IP to be assigned (this can take ~60s)..."
 for i in $(seq 1 18); do
-  ALL_READY=true
-  for SVC in $ALL_SVCS; do
-    IP="$(kubectl get svc "$SVC" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
-    [ -z "$IP" ] && ALL_READY=false && break
-  done
-  "$ALL_READY" && break
+  STORE_IP="$(kubectl get svc store -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+  [ -n "$STORE_IP" ] && break
   echo "  ... attempt $i/18, retrying in 10s"
   sleep 10
 done
@@ -296,16 +289,11 @@ done
 echo ""
 echo "=== Setup complete ==="
 echo ""
-echo "External service endpoints:"
-for SVC in $ALL_SVCS; do
-  IP="$(kubectl get svc "$SVC" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
-  PORT="$(kubectl get svc "$SVC" -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || true)"
-  if [ -n "$IP" ]; then
-    echo "  $SVC: http://$IP:$PORT"
-  else
-    echo "  $SVC: IP not yet assigned (kubectl get svc $SVC)"
-  fi
-done
+if [ -n "${STORE_IP:-}" ]; then
+  echo "Pizza Vibe: http://$STORE_IP"
+else
+  echo "Store IP not yet assigned — check with: kubectl get svc store"
+fi
 echo ""
 echo "Jaeger UI (port-forward):"
 echo "  kubectl port-forward svc/jaeger-query 16686"

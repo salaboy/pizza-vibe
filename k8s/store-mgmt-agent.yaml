@@ -14,7 +14,7 @@ spec:
       labels:
         app: store-mgmt-agent
       annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
+        #instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
     spec:
       containers:
         - name: store-mgmt-agent
@@ -42,6 +42,8 @@ spec:
               value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc
+            # - name: OTEL_JAVAAGENT_ENABLED
+            #   value: "false"  
           livenessProbe:
             httpGet:
               path: /q/health

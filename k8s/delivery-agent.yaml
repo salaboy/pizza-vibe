@@ -14,7 +14,7 @@ spec:
       labels:
         app: delivery-agent
       annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
+       # instrumentation.opentelemetry.io/inject-java: "opentelemetry/instrumentation"
     spec:
       containers:
         - name: delivery-agent
@@ -34,8 +34,8 @@ spec:
               value: "/deployments/skills/bikes/scripts"
             - name: STORE_SERVICE_URL
               value: "http://store:80"
-#            - name: OTEL_JAVAAGENT_ENABLED
-#              value: "false"
+            # - name: OTEL_JAVAAGENT_ENABLED
+            #   value: "false"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
