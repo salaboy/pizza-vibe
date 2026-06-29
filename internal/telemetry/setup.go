@@ -25,12 +25,11 @@ import (
 // localhost:4317). The service name can be overridden at runtime with the
 // standard OTEL_SERVICE_NAME environment variable.
 func Setup(ctx context.Context, serviceName string) (func(context.Context) error, error) {
-	res, err := sdkresource.Merge(
-		sdkresource.Default(),
-		sdkresource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName(serviceName),
-		),
+	res, err := sdkresource.New(ctx,
+		sdkresource.WithTelemetrySDK(),
+		sdkresource.WithProcess(),
+		sdkresource.WithHost(),
+		sdkresource.WithAttributes(semconv.ServiceName(serviceName)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("resource: %w", err)
