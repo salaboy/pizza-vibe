@@ -138,6 +138,10 @@
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-micrometer-opentelemetry</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
