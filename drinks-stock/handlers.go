@@ -42,11 +42,11 @@ func (ds *DrinksStock) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
 
-	slog.Info("getting all drinks stock items")
+	slog.InfoContext(r.Context(), "getting all drinks stock items")
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ds.stock); err != nil {
-		slog.Error("failed to encode drinks stock", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode drinks stock", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -62,16 +62,16 @@ func (ds *DrinksStock) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	ds.mu.RUnlock()
 
 	if !ok {
-		slog.Warn("item not found", "item", item)
+		slog.WarnContext(r.Context(), "item not found", "item", item)
 		http.Error(w, "Item not found", http.StatusNotFound)
 		return
 	}
 
-	slog.Info("getting drinks stock item", "item", item, "quantity", qty)
+	slog.InfoContext(r.Context(), "getting drinks stock item", "item", item, "quantity", qty)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ItemResponse{Item: item, Quantity: qty}); err != nil {
-		slog.Error("failed to encode item response", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode item response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -86,7 +86,7 @@ func (ds *DrinksStock) HandleAcquireItem(w http.ResponseWriter, r *http.Request)
 	qty, ok := ds.stock[item]
 	if !ok {
 		ds.mu.Unlock()
-		slog.Warn("item not found for acquisition", "item", item)
+		slog.WarnContext(r.Context(), "item not found for acquisition", "item", item)
 		http.Error(w, "Item not found", http.StatusNotFound)
 		return
 	}
@@ -94,12 +94,12 @@ func (ds *DrinksStock) HandleAcquireItem(w http.ResponseWriter, r *http.Request)
 	var status string
 	if qty == 0 {
 		status = StatusEmpty
-		slog.Info("item is empty", "item", item)
+		slog.WarnContext(r.Context(), "item is empty", "item", item)
 	} else {
 		ds.stock[item] = qty - 1
 		qty = ds.stock[item]
 		status = StatusAcquired
-		slog.Info("item acquired", "item", item, "remainingQuantity", qty)
+		slog.InfoContext(r.Context(), "item acquired", "item", item, "remainingQuantity", qty)
 	}
 	ds.mu.Unlock()
 
@@ -109,7 +109,7 @@ func (ds *DrinksStock) HandleAcquireItem(w http.ResponseWriter, r *http.Request)
 		Status:            status,
 		RemainingQuantity: qty,
 	}); err != nil {
-		slog.Error("failed to encode acquire response", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode acquire response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -127,7 +127,7 @@ func (ds *DrinksStock) HandleAddQuantity(w http.ResponseWriter, r *http.Request)
 
 	var req AddQuantityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		slog.Warn("invalid request body", "error", err)
+		slog.WarnContext(r.Context(), "invalid request body", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -136,7 +136,7 @@ func (ds *DrinksStock) HandleAddQuantity(w http.ResponseWriter, r *http.Request)
 	qty, ok := ds.stock[item]
 	if !ok {
 		ds.mu.Unlock()
-		slog.Warn("item not found for adding quantity", "item", item)
+		slog.WarnContext(r.Context(), "item not found for adding quantity", "item", item)
 		http.Error(w, "Item not found", http.StatusNotFound)
 		return
 	}
@@ -145,14 +145,14 @@ func (ds *DrinksStock) HandleAddQuantity(w http.ResponseWriter, r *http.Request)
 	newQty := ds.stock[item]
 	ds.mu.Unlock()
 
-	slog.Info("quantity added", "item", item, "added", req.Quantity, "newQuantity", newQty)
+	slog.InfoContext(r.Context(), "quantity added", "item", item, "added", req.Quantity, "newQuantity", newQty)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ItemResponse{
 		Item:     item,
 		Quantity: newQty,
 	}); err != nil {
-		slog.Error("failed to encode add quantity response", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode add quantity response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}

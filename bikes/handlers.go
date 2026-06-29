@@ -60,8 +60,6 @@ func (s *BikeService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	slog.Info("getting all bikes")
-
 	bikes := make([]Bike, 0, len(s.bikes))
 	for _, b := range s.bikes {
 		bikes = append(bikes, *b)
@@ -70,9 +68,11 @@ func (s *BikeService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 		return bikes[i].ID < bikes[j].ID
 	})
 
+	slog.InfoContext(r.Context(), "getting all bikes", "count", len(bikes))
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(bikes); err != nil {
-		slog.Error("failed to encode bikes", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode bikes", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -86,16 +86,16 @@ func (s *BikeService) HandleGetBike(w http.ResponseWriter, r *http.Request) {
 	s.mu.RUnlock()
 
 	if !ok {
-		slog.Warn("bike not found", "bikeId", bikeID)
+		slog.WarnContext(r.Context(), "bike not found", "bikeId", bikeID)
 		http.Error(w, "Bike not found", http.StatusNotFound)
 		return
 	}
 
-	slog.Info("getting bike", "bikeId", bikeID, "status", bike.Status)
+	slog.InfoContext(r.Context(), "getting bike", "bikeId", bikeID, "status", bike.Status)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(bike); err != nil {
-		slog.Error("failed to encode bike response", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode bike response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -106,13 +106,13 @@ func (s *BikeService) HandleReserveBike(w http.ResponseWriter, r *http.Request) 
 
 	var req ReserveRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		slog.Warn("invalid request body", "error", err)
+		slog.WarnContext(r.Context(), "invalid request body", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.User == "" {
-		slog.Warn("user is required to reserve a bike")
+		slog.WarnContext(r.Context(), "user is required to reserve a bike")
 		http.Error(w, "User is required", http.StatusBadRequest)
 		return
 	}
@@ -121,14 +121,14 @@ func (s *BikeService) HandleReserveBike(w http.ResponseWriter, r *http.Request) 
 	bike, ok := s.bikes[bikeID]
 	if !ok {
 		s.mu.Unlock()
-		slog.Warn("bike not found for reservation", "bikeId", bikeID)
+		slog.WarnContext(r.Context(), "bike not found for reservation", "bikeId", bikeID)
 		http.Error(w, "Bike not found", http.StatusNotFound)
 		return
 	}
 
 	if bike.Status != StatusAvailable {
 		s.mu.Unlock()
-		slog.Warn("bike not available", "bikeId", bikeID, "status", bike.Status)
+		slog.WarnContext(r.Context(), "bike not available", "bikeId", bikeID, "status", bike.Status)
 		http.Error(w, "Bike is not available", http.StatusConflict)
 		return
 	}
@@ -140,14 +140,14 @@ func (s *BikeService) HandleReserveBike(w http.ResponseWriter, r *http.Request) 
 	bike.UpdatedAt = now
 	s.mu.Unlock()
 
-	slog.Info("bike reserved", "bikeId", bikeID, "user", req.User, "orderId", req.OrderID)
+	slog.InfoContext(r.Context(), "bike reserved", "bikeId", bikeID, "user", req.User, "orderId", req.OrderID)
 
 	// Start auto-release goroutine (preserve trace context but detach cancellation)
 	go s.autoRelease(context.WithoutCancel(r.Context()), bikeID, req.User)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(bike); err != nil {
-		slog.Error("failed to encode reserve response", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode reserve response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -155,7 +155,7 @@ func (s *BikeService) HandleReserveBike(w http.ResponseWriter, r *http.Request) 
 
 func (s *BikeService) autoRelease(ctx context.Context, bikeID string, user string) {
 	duration := s.releaseDuration()
-	slog.Info("auto-release scheduled", "bikeId", bikeID, "duration", duration)
+	slog.InfoContext(ctx, "auto-release scheduled", "bikeId", bikeID, "duration", duration)
 
 	// Look up the orderId for this bike
 	s.mu.RLock()
@@ -183,7 +183,7 @@ func (s *BikeService) autoRelease(ctx context.Context, bikeID string, user strin
 			})
 		}
 		s.sendProgressToStore(ctx, orderID, bikeID, progress)
-		slog.Info("bike on route", "bikeId", bikeID, "user", user, "progress", progress)
+		slog.InfoContext(ctx, "bike on route", "bikeId", bikeID, "user", user, "progress", progress)
 	}
 
 	s.mu.Lock()
@@ -193,7 +193,7 @@ func (s *BikeService) autoRelease(ctx context.Context, bikeID string, user strin
 		bike.User = ""
 		bike.OrderID = ""
 		bike.UpdatedAt = time.Now()
-		slog.Info("bike auto-released", "bikeId", bikeID)
+		slog.InfoContext(ctx, "bike auto-released", "bikeId", bikeID)
 	}
 	s.mu.Unlock()
 	s.sendOrderMessageEvent(ctx, orderID, bikeID, "DELIVERED", "order delivered")
@@ -212,18 +212,18 @@ func (s *BikeService) sendProgressToStore(ctx context.Context, orderID, bikeID s
 	}
 	body, err := json.Marshal(event)
 	if err != nil {
-		slog.Error("failed to marshal bike progress", "error", err)
+		slog.ErrorContext(ctx, "failed to marshal bike progress", "error", err)
 		return
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.storeURL+"/events", bytes.NewReader(body))
 	if err != nil {
-		slog.Error("failed to create progress request", "error", err)
+		slog.ErrorContext(ctx, "failed to create progress request", "error", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		slog.Warn("failed to send progress to store", "bikeId", bikeID, "error", err)
+		slog.WarnContext(ctx, "failed to send progress to store", "bikeId", bikeID, "error", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -242,18 +242,18 @@ func (s *BikeService) sendOrderMessageEvent(ctx context.Context, orderID, bikeID
 	}
 	body, err := json.Marshal(event)
 	if err != nil {
-		slog.Error("failed to marshal bike progress", "error", err)
+		slog.ErrorContext(ctx, "failed to marshal bike progress", "error", err)
 		return
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.storeURL+"/events", bytes.NewReader(body))
 	if err != nil {
-		slog.Error("failed to create event request", "error", err)
+		slog.ErrorContext(ctx, "failed to create event request", "error", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		slog.Warn("failed to send progress to store", "bikeId", bikeID, "error", err)
+		slog.WarnContext(ctx, "failed to send progress to store", "bikeId", bikeID, "error", err)
 		return
 	}
 	defer resp.Body.Close()

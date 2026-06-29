@@ -84,6 +84,7 @@ func (s *OvenService) randomReleaseDuration() time.Duration {
 }
 
 // scheduleRelease releases an oven after the specified duration.
+// This runs in a background goroutine without request context.
 func (s *OvenService) scheduleRelease(ovenID string, duration time.Duration) {
 	time.Sleep(duration)
 
@@ -119,11 +120,11 @@ func (s *OvenService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 		return ovenList[i].ID < ovenList[j].ID
 	})
 
-	slog.Info("getting all ovens", "count", len(ovenList))
+	slog.InfoContext(r.Context(), "getting all ovens", "count", len(ovenList))
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ovenList); err != nil {
-		slog.Error("failed to encode ovens", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode ovens", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -138,7 +139,7 @@ func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 	oven, ok := s.ovens[ovenID]
 	if !ok {
 		s.mu.RUnlock()
-		slog.Warn("oven not found", "ovenId", ovenID)
+		slog.WarnContext(r.Context(), "oven not found", "ovenId", ovenID)
 		http.Error(w, "Oven not found", http.StatusNotFound)
 		return
 	}
@@ -157,11 +158,11 @@ func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	s.mu.RUnlock()
 
-	slog.Info("getting oven", "ovenId", ovenID, "status", resp.Status, "progress", resp.Progress)
+	slog.InfoContext(r.Context(), "getting oven", "ovenId", ovenID, "status", resp.Status, "progress", resp.Progress)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Error("failed to encode oven", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode oven", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -175,7 +176,7 @@ func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
 	user := r.URL.Query().Get("user")
 
 	if user == "" {
-		slog.Warn("missing user parameter", "ovenId", ovenID)
+		slog.WarnContext(r.Context(), "missing user parameter", "ovenId", ovenID)
 		http.Error(w, "User parameter is required", http.StatusBadRequest)
 		return
 	}
@@ -184,14 +185,14 @@ func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
 	oven, ok := s.ovens[ovenID]
 	if !ok {
 		s.mu.Unlock()
-		slog.Warn("oven not found for reservation", "ovenId", ovenID)
+		slog.WarnContext(r.Context(), "oven not found for reservation", "ovenId", ovenID)
 		http.Error(w, "Oven not found", http.StatusNotFound)
 		return
 	}
 
 	if oven.Status == StatusReserved {
 		s.mu.Unlock()
-		slog.Warn("oven already reserved", "ovenId", ovenID, "currentUser", oven.User)
+		slog.WarnContext(r.Context(), "oven already reserved", "ovenId", ovenID, "currentUser", oven.User)
 		http.Error(w, "Oven is already reserved", http.StatusConflict)
 		return
 	}
@@ -210,13 +211,12 @@ func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
 
 	go s.scheduleRelease(ovenID, releaseDuration)
 
-	slog.Info("oven reserved", "ovenId", ovenID, "user", user, "releaseIn", releaseDuration)
+	slog.InfoContext(r.Context(), "oven reserved", "ovenId", ovenID, "user", user, "releaseIn", releaseDuration)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(oven); err != nil {
-		slog.Error("failed to encode oven", "error", err)
+		slog.ErrorContext(r.Context(), "failed to encode oven", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
-

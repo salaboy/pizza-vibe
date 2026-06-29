@@ -18,7 +18,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/salaboy/pizza-vibe/internal/telemetry"
 	"github.com/salaboy/pizza-vibe/store"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func main() {
@@ -26,6 +28,12 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	otelShutdown, err := telemetry.Setup(context.Background(), "store")
+	if err != nil {
+		slog.Error("failed to set up telemetry", "error", err)
+		os.Exit(1)
 	}
 
 	var s *store.Store
@@ -141,7 +149,7 @@ func main() {
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: r,
+		Handler: otelhttp.NewHandler(r, "store"),
 	}
 
 	// Graceful shutdown: listen for interrupt/terminate signals
@@ -164,7 +172,9 @@ func main() {
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("shutdown error", "error", err)
-		os.Exit(1)
+	}
+	if err := otelShutdown(shutdownCtx); err != nil {
+		slog.Error("telemetry shutdown error", "error", err)
 	}
 	slog.Info("store service stopped")
 }

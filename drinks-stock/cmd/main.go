@@ -15,30 +15,33 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	drinksstock "github.com/salaboy/pizza-vibe/drinks-stock"
+	"github.com/salaboy/pizza-vibe/internal/telemetry"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func main() {
-	// Get port from environment variable or default to 8090
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8090"
 	}
 
-	// Create drinks stock instance
+	otelShutdown, err := telemetry.Setup(context.Background(), "drinks-stock")
+	if err != nil {
+		slog.Error("failed to set up telemetry", "error", err)
+		os.Exit(1)
+	}
+
 	ds := drinksstock.NewDrinksStock()
 
-	// Set up router with middleware
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Register routes
 	r.Get("/drinks-stock", ds.HandleGetAll)
 	r.Get("/drinks-stock/{item}", ds.HandleGetItem)
 	r.Post("/drinks-stock/{item}", ds.HandleAcquireItem)
 	r.Post("/drinks-stock/{item}/add", ds.HandleAddQuantity)
 
-	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -47,10 +50,9 @@ func main() {
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: r,
+		Handler: otelhttp.NewHandler(r, "drinks-stock"),
 	}
 
-	// Graceful shutdown: listen for interrupt/terminate signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -70,7 +72,9 @@ func main() {
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("shutdown error", "error", err)
-		os.Exit(1)
+	}
+	if err := otelShutdown(shutdownCtx); err != nil {
+		slog.Error("telemetry shutdown error", "error", err)
 	}
 	slog.Info("drinks-stock service stopped")
 }

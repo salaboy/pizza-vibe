@@ -94,12 +94,16 @@ func (s *Store) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	// Store the order
 	if err := s.repo.CreateOrder(order); err != nil {
-		slog.Error("failed to create order", "error", err)
+		slog.ErrorContext(r.Context(), "failed to create order", "error", err)
 		http.Error(w, "Failed to create order", http.StatusInternalServerError)
 		return
 	}
 
-	slog.Info("order created", "orderId", order.OrderID, "items", len(order.OrderItems))
+	slog.InfoContext(r.Context(), "order created",
+		"orderId", order.OrderID,
+		"pizzaItems", len(order.OrderItems),
+		"drinkItems", len(order.DrinkItems),
+	)
 
 	// Send order to the store management agent (background; preserve trace context but detach cancellation)
 	go s.callStoreMgmtAgent(context.WithoutCancel(r.Context()), order)
@@ -120,27 +124,30 @@ func (s *Store) callStoreMgmtAgent(ctx context.Context, order *Order) {
 
 	body, err := json.Marshal(processReq)
 	if err != nil {
-		slog.Error("failed to marshal process order request", "orderId", order.OrderID, "error", err)
+		slog.ErrorContext(ctx, "failed to marshal process order request", "orderId", order.OrderID, "error", err)
 		return
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.agentURL+"/mgmt/processOrder", bytes.NewReader(body))
 	if err != nil {
-		slog.Error("failed to create agent request", "orderId", order.OrderID, "error", err)
+		slog.ErrorContext(ctx, "failed to create agent request", "orderId", order.OrderID, "error", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		slog.Error("failed to call store management agent", "orderId", order.OrderID, "error", err)
+		slog.ErrorContext(ctx, "failed to call store management agent", "orderId", order.OrderID, "error", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		slog.Warn("store management agent returned unexpected status", "orderId", order.OrderID, "status", resp.StatusCode)
+		slog.WarnContext(ctx, "store management agent returned unexpected status", "orderId", order.OrderID, "status", resp.StatusCode)
+		return
 	}
+
+	slog.InfoContext(ctx, "store management agent notified", "orderId", order.OrderID)
 }
 
 // GetOrder retrieves an order by its UUID.
@@ -183,15 +190,15 @@ func (s *Store) HandleEvent(w http.ResponseWriter, r *http.Request) {
 		switch event.Status {
 		case "COOKING", "COOKED", "DELIVERING", "DELIVERED":
 			if !s.UpdateOrderStatus(orderID, event.Status) {
-				slog.Warn("order not found for event", "orderId", event.OrderID, "status", event.Status, "source", event.Source)
+				slog.WarnContext(r.Context(), "order not found for event", "orderId", event.OrderID, "status", event.Status, "source", event.Source)
 			}
 		}
 		s.trackEvent(orderID, event)
 	} else {
-		slog.Warn("event has non-UUID orderId, broadcasting without order update", "orderId", event.OrderID, "source", event.Source)
+		slog.WarnContext(r.Context(), "event has non-UUID orderId, broadcasting without order update", "orderId", event.OrderID, "source", event.Source)
 	}
 
-	slog.Info("order event received", "orderId", event.OrderID, "status", event.Status, "source", event.Source)
+	slog.InfoContext(r.Context(), "order event received", "orderId", event.OrderID, "status", event.Status, "source", event.Source)
 
 	// Track a corresponding agent event for key order milestones so the agents page shows them.
 	if event.Status == "DELIVERED" {
@@ -202,7 +209,7 @@ func (s *Store) HandleEvent(w http.ResponseWriter, r *http.Request) {
 			Timestamp: FlexTimestamp{Time: time.Now().UTC()},
 		}
 		if err := s.repo.TrackAgentEvent(agentEvent); err != nil {
-			slog.Error("failed to track delivery agent event", "orderId", event.OrderID, "error", err)
+			slog.ErrorContext(r.Context(), "failed to track delivery agent event", "orderId", event.OrderID, "error", err)
 		}
 	}
 
@@ -240,10 +247,12 @@ func (s *Store) GetOrderEvents(orderID uuid.UUID) []OrderEvent {
 func (s *Store) HandleGetOrders(w http.ResponseWriter, r *http.Request) {
 	orders, err := s.repo.GetAllOrders()
 	if err != nil {
-		slog.Error("failed to get orders", "error", err)
+		slog.ErrorContext(r.Context(), "failed to get orders", "error", err)
 		http.Error(w, "Failed to retrieve orders", http.StatusInternalServerError)
 		return
 	}
+
+	slog.InfoContext(r.Context(), "listing orders", "count", len(orders))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(orders)
@@ -268,6 +277,8 @@ func (s *Store) HandleGetEvents(w http.ResponseWriter, r *http.Request) {
 		events = []OrderEvent{}
 	}
 
+	slog.InfoContext(r.Context(), "listing order events", "orderId", orderIDStr, "count", len(events))
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
 }
@@ -276,37 +287,37 @@ func (s *Store) HandleGetEvents(w http.ResponseWriter, r *http.Request) {
 func (s *Store) HandleAgentEvent(w http.ResponseWriter, r *http.Request) {
 	var event AgentEvent
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		slog.Error("agent event: invalid JSON", "error", err)
+		slog.ErrorContext(r.Context(), "agent event: invalid JSON", "error", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	if event.AgentID == "" {
-		slog.Error("agent event: missing agentId", "event", event)
+		slog.ErrorContext(r.Context(), "agent event: missing agentId", "event", event)
 		http.Error(w, "agentId is required", http.StatusBadRequest)
 		return
 	}
 
 	if event.Kind != "request" && event.Kind != "response" && event.Kind != "error" {
-		slog.Error("agent event: invalid kind", "kind", event.Kind, "agentId", event.AgentID)
+		slog.ErrorContext(r.Context(), "agent event: invalid kind", "kind", event.Kind, "agentId", event.AgentID)
 		http.Error(w, "kind must be one of: request, response, error", http.StatusBadRequest)
 		return
 	}
 
 	// Filter out ToolExecutionResultMessage events from langchain4j
 	if strings.Contains(event.Text, "ToolExecutionResultMessage") {
-		slog.Debug("agent event: filtered out ToolExecutionResultMessage", "agentId", event.AgentID)
+		slog.DebugContext(r.Context(), "agent event: filtered out ToolExecutionResultMessage", "agentId", event.AgentID)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	if err := s.repo.TrackAgentEvent(event); err != nil {
-		slog.Error("failed to track agent event", "agentId", event.AgentID, "error", err)
+		slog.ErrorContext(r.Context(), "failed to track agent event", "agentId", event.AgentID, "error", err)
 		http.Error(w, "Failed to store agent event", http.StatusInternalServerError)
 		return
 	}
 
-	slog.Info("agent event received", "agentId", event.AgentID, "kind", event.Kind)
+	slog.InfoContext(r.Context(), "agent event received", "agentId", event.AgentID, "kind", event.Kind)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -327,13 +338,15 @@ func (s *Store) HandleGetAgentEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		slog.Error("failed to get agent events", "agentId", agentID, "error", err)
+		slog.ErrorContext(r.Context(), "failed to get agent events", "agentId", agentID, "error", err)
 		http.Error(w, "Failed to retrieve agent events", http.StatusInternalServerError)
 		return
 	}
 	if events == nil {
 		events = []AgentEvent{}
 	}
+
+	slog.InfoContext(r.Context(), "listing agent events", "agentId", agentID, "count", len(events))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
@@ -342,12 +355,12 @@ func (s *Store) HandleGetAgentEvents(w http.ResponseWriter, r *http.Request) {
 // HandleDeleteAgentEvents handles DELETE /agents-events requests to clear all agent events.
 func (s *Store) HandleDeleteAgentEvents(w http.ResponseWriter, r *http.Request) {
 	if err := s.repo.DeleteAllAgentEvents(); err != nil {
-		slog.Error("failed to delete agent events", "error", err)
+		slog.ErrorContext(r.Context(), "failed to delete agent events", "error", err)
 		http.Error(w, "Failed to delete agent events", http.StatusInternalServerError)
 		return
 	}
 
-	slog.Info("all agent events deleted")
+	slog.InfoContext(r.Context(), "all agent events deleted")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -365,6 +378,8 @@ func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	slog.InfoContext(r.Context(), "chat request received", "sessionId", chatReq.SessionID)
+
 	body, err := json.Marshal(chatReq)
 	if err != nil {
 		http.Error(w, "Failed to marshal request", http.StatusInternalServerError)
@@ -373,7 +388,7 @@ func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	agentReq, err := http.NewRequestWithContext(r.Context(), http.MethodPost, s.agentURL+"/mgmt/chat", bytes.NewReader(body))
 	if err != nil {
-		slog.Error("failed to create chat agent request", "error", err)
+		slog.ErrorContext(r.Context(), "failed to create chat agent request", "error", err)
 		http.Error(w, "Failed to create request", http.StatusInternalServerError)
 		return
 	}
@@ -382,7 +397,7 @@ func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := s.httpClient.Do(agentReq)
 	if err != nil {
-		slog.Error("failed to call chat agent", "error", err)
+		slog.ErrorContext(r.Context(), "failed to call chat agent", "error", err)
 		http.Error(w, "Failed to reach chat agent", http.StatusBadGateway)
 		return
 	}
@@ -390,7 +405,7 @@ func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		slog.Warn("chat agent returned unexpected status", "status", resp.StatusCode, "body", string(respBody))
+		slog.WarnContext(r.Context(), "chat agent returned unexpected status", "status", resp.StatusCode, "body", string(respBody))
 		http.Error(w, fmt.Sprintf("Chat agent error: %s", string(respBody)), resp.StatusCode)
 		return
 	}
@@ -415,4 +430,6 @@ func (s *Store) HandleChat(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+
+	slog.InfoContext(r.Context(), "chat stream completed", "sessionId", chatReq.SessionID)
 }
