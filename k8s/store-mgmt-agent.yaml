@@ -39,9 +39,9 @@ spec:
             - name: STORE_MGMT_AGENT_URL
               value: "http://store-mgmt-agent:9999"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
+              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4318"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: grpc
+              value: http/protobuf
             # - name: OTEL_JAVAAGENT_ENABLED
             #   value: "false"  
           livenessProbe:

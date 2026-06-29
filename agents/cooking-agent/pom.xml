@@ -127,6 +127,10 @@
       <artifactId>a2a-java-sdk-opentelemetry-server</artifactId>
       <version>${a2a.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
