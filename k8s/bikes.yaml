@@ -28,6 +28,8 @@ spec:
               value: "8088"
             - name: STORE_URL
               value: "http://store:80"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
           livenessProbe:
             httpGet:
               path: /health

@@ -48,6 +48,8 @@ spec:
                 secretKeyRef:
                   name: dash0-secrets
                   key: dash0-grpc-hostname
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
           livenessProbe:
             httpGet:
               path: /health

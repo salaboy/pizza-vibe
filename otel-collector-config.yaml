@@ -27,6 +27,12 @@ processors:
           kind == SPAN_KIND_SERVER and
           attributes["http.route"] == "/mcp/messages/:id"
 
+  filter/drop_sdk_exporter_spans:
+    error_mode: ignore
+    traces:
+      span:
+        - IsMatch(attributes["rpc.service"], "^opentelemetry\\.proto\\.collector\\.")
+
   batch:
     timeout: 10s
     send_batch_size: 1024
@@ -49,7 +55,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [filter, filter/drop_mcp_transport, batch]
+      processors: [filter, filter/drop_mcp_transport, filter/drop_sdk_exporter_spans, batch]
       exporters: [otlp/dash0]
 
     metrics:

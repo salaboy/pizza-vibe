@@ -26,6 +26,8 @@ spec:
           env:
             - name: PORT
               value: "8084"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
           livenessProbe:
             httpGet:
               path: /health
