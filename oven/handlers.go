@@ -182,7 +182,7 @@ func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 // Returns 409 Conflict if oven is already reserved.
 // Returns 500 if Oven Chaos is on
 func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
-	if chaos, _ := s.ffClient.BooleanValue(r.Context(), flagOvenChaos, false, openfeature.EvaluationContext{}); chaos {
+	if chaos, _ := s.ffClient.BooleanValue(r.Context(), flagOvenChaos, true, openfeature.EvaluationContext{}); chaos {
 		slog.WarnContext(r.Context(), "oven-chaos flag enabled")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
