@@ -28,6 +28,7 @@ func InitFeatureFlags() {
 	provider, err := flagd.NewProvider(
 		flagd.WithHost(host),
 		flagd.WithPort(port),
+		flagd.WithoutCache()
 	)
 	if err != nil {
 		slog.Error("failed to create OpenFeature flagd provider", "error", err)

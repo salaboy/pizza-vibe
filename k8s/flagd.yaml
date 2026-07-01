@@ -41,6 +41,8 @@ spec:
           image: ghcr.io/open-feature/flagd:latest
           args:
             - start
+            - -p
+            - "8013"
             - --uri
             - file:/etc/flagd/flags.json
           ports:
