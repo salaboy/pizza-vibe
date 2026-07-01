@@ -31,6 +31,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	oven.InitFeatureFlags()
+
 	svc := oven.NewOvenService()
 
 	r := chi.NewRouter()

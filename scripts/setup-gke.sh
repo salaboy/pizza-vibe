@@ -257,10 +257,15 @@ echo "OTel Instrumentation resource applied."
 echo ""
 
 # -------------------------------------------------------
-# 6. Deploy application services
+# 6. Deploy application services (including flagd for OpenFeature)
 # -------------------------------------------------------
 echo "--- Step 6: Deploying application services ---"
 kubectl apply -f "$PROJECT_ROOT/k8s/"
+
+echo "Waiting for flagd (OpenFeature) to be ready..."
+kubectl rollout status deployment/flagd --timeout=60s
+echo "flagd deployed."
+
 echo "Restarting deployments to pull fresh images..."
 kubectl rollout restart deployment
 echo ""

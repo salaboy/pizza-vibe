@@ -75,7 +75,16 @@ echo ""
 "$SCRIPT_DIR/setup-observability.sh"
 
 # -------------------------------------------------------
-# 5. Build, load images, and deploy
+# 5. Deploy flagd (OpenFeature flag evaluation engine)
+# -------------------------------------------------------
+echo "--- Step 5: Deploying flagd (OpenFeature) ---"
+kubectl apply -f "$PROJECT_ROOT/k8s/flagd.yaml"
+kubectl rollout status deployment/flagd --timeout=60s
+echo "flagd deployed."
+echo ""
+
+# -------------------------------------------------------
+# 6. Build, load images, and deploy
 # -------------------------------------------------------
 export CLUSTER_NAME
 "$SCRIPT_DIR/rebuild-and-deploy.sh"

@@ -10,7 +10,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/open-feature/go-sdk/openfeature"
 )
+
+const flagOvenChaos = "oven-chaos"
 
 // OvenServiceConfig holds configuration for the OvenService.
 type OvenServiceConfig struct {
@@ -38,6 +41,7 @@ type OvenService struct {
 	ovens        map[string]*Oven
 	config       OvenServiceConfig
 	cookingState map[string]*cookingState
+	ffClient     *openfeature.Client
 }
 
 // NewOvenService creates a new OvenService instance with default ovens and config.
@@ -46,6 +50,7 @@ func NewOvenService() *OvenService {
 		ovens:        DefaultOvens(),
 		config:       DefaultConfig(),
 		cookingState: make(map[string]*cookingState),
+		ffClient:     openfeature.NewClient("oven"),
 	}
 }
 
@@ -55,6 +60,7 @@ func NewOvenServiceWithConfig(config OvenServiceConfig) *OvenService {
 		ovens:        DefaultOvens(),
 		config:       config,
 		cookingState: make(map[string]*cookingState),
+		ffClient:     openfeature.NewClient("oven"),
 	}
 }
 
@@ -64,6 +70,7 @@ func NewOvenServiceWithOvens(ovens map[string]*Oven) *OvenService {
 		ovens:        ovens,
 		config:       DefaultConfig(),
 		cookingState: make(map[string]*cookingState),
+		ffClient:     openfeature.NewClient("oven"),
 	}
 }
 
@@ -109,6 +116,12 @@ func (s *OvenService) scheduleRelease(ovenID string, duration time.Duration) {
 // HandleGetAll handles GET /ovens/ requests.
 // Returns a JSON array of all ovens with their status.
 func (s *OvenService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
+	if chaos, _ := s.ffClient.BooleanValue(r.Context(), flagOvenChaos, false, openfeature.EvaluationContext{}); chaos {
+		slog.WarnContext(r.Context(), "oven-chaos flag enabled")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -133,6 +146,12 @@ func (s *OvenService) HandleGetAll(w http.ResponseWriter, r *http.Request) {
 // HandleGetByID handles GET /ovens/{ovenId} requests.
 // Returns the status of a specific oven, or 404 if not found.
 func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
+	if chaos, _ := s.ffClient.BooleanValue(r.Context(), flagOvenChaos, false, openfeature.EvaluationContext{}); chaos {
+		slog.WarnContext(r.Context(), "oven-chaos flag enabled")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	ovenID := chi.URLParam(r, "ovenId")
 
 	s.mu.RLock()
@@ -172,6 +191,12 @@ func (s *OvenService) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 // Reserves an oven for a user. Requires 'user' query parameter.
 // Returns 409 Conflict if oven is already reserved.
 func (s *OvenService) HandleReserve(w http.ResponseWriter, r *http.Request) {
+	if chaos, _ := s.ffClient.BooleanValue(r.Context(), flagOvenChaos, false, openfeature.EvaluationContext{}); chaos {
+		slog.WarnContext(r.Context(), "oven-chaos flag enabled")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	ovenID := chi.URLParam(r, "ovenId")
 	user := r.URL.Query().Get("user")
 

@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flagd-config
+  labels:
+    app: flagd
+data:
+  flags.json: |
+    {
+      "$schema": "https://flagd.dev/schema/v0/flags.json",
+      "flags": {
+        "oven-chaos": {
+          "state": "ENABLED",
+          "variants": {
+            "on": true,
+            "off": false
+          },
+          "defaultVariant": "off"
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagd
+  labels:
+    app: flagd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flagd
+  template:
+    metadata:
+      labels:
+        app: flagd
+    spec:
+      containers:
+        - name: flagd
+          image: ghcr.io/open-feature/flagd:latest
+          args:
+            - start
+            - --uri
+            - file:/etc/flagd/flags.json
+          ports:
+            - containerPort: 8013
+              name: grpc
+          volumeMounts:
+            - name: flagd-config
+              mountPath: /etc/flagd
+      volumes:
+        - name: flagd-config
+          configMap:
+            name: flagd-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagd
+  labels:
+    app: flagd
+spec:
+  selector:
+    app: flagd
+  ports:
+    - name: grpc
+      port: 8013
+      targetPort: 8013
+      protocol: TCP
+  type: ClusterIP
