@@ -7,6 +7,7 @@ import (
 
 	flagd "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
+	hooks "github.com/open-feature/go-sdk-contrib/hooks/open-telemetry"
 )
 
 // InitFeatureFlags sets up the OpenFeature provider backed by flagd.
@@ -32,6 +33,8 @@ func InitFeatureFlags() {
 		slog.Error("failed to create OpenFeature flagd provider", "error", err)
 		return
 	}
+
+	openfeature.AddHooks(hooks.NewTracesHook())
 
 	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		slog.Error("failed to initialize OpenFeature provider", "error", err)
