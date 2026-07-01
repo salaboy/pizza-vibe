@@ -7,7 +7,7 @@ import (
 
 	flagd "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
-	hooks "github.com/open-feature/go-sdk-contrib/hooks/open-telemetry"
+	hooks "github.com/open-feature/go-sdk-contrib/hooks/open-telemetry/pkg"
 )
 
 // InitFeatureFlags sets up the OpenFeature provider backed by flagd.

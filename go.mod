@@ -33,6 +33,7 @@ require (
 	github.com/open-feature/flagd-schemas v0.2.13 // indirect
 	github.com/open-feature/flagd/core v0.16.0 // indirect
 	github.com/open-feature/go-sdk v1.17.2 // indirect
+	github.com/open-feature/go-sdk-contrib/hooks/open-telemetry v0.3.7 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/flagd v0.6.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
