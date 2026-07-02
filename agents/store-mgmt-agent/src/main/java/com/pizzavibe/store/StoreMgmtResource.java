@@ -7,6 +7,7 @@ import com.pizzavibe.store.workflows.PizzaOrderWorkflow;
 import dev.openfeature.contrib.providers.flagd.FlagdProvider;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.OpenFeatureAPI;
+import dev.openfeature.contrib.hooks.otel.TracesHook;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -38,6 +39,8 @@ public class StoreMgmtResource {
 
     @PostConstruct
     void initOpenFeature() {
+        // Set TracesHook globally
+        OpenFeatureAPI.getInstance().addHooks(new TracesHook());
         try {
             OpenFeatureAPI.getInstance().setProvider(new FlagdProvider());
             openFeatureClient = OpenFeatureAPI.getInstance().getClient();

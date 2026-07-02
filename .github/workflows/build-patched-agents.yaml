@@ -2,10 +2,15 @@ name: Build and publish agents (patched-a2a-tracing)
 
 on:
   push:
-    branches: [patched-a2a-tracing]
+    branches: [patched-a2a-tracing, openfeature]
     paths:
       - 'agents/**'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: false
+        default: 'patched-a2a-tracing'
 
 env:
   REGISTRY: salaboy
@@ -30,6 +35,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref_name }}
 
       - name: Set up Java 21
         uses: actions/setup-java@v4
