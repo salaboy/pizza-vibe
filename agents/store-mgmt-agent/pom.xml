@@ -19,6 +19,8 @@
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <protobuf.version>4.33.1</protobuf.version>
     <a2a.version>1.0.1.Final-SNAPSHOT</a2a.version>
+    <openfeature.sdk.version>1.21.0</openfeature.sdk.version>
+    <openfeature.flagd.version>0.14.0</openfeature.flagd.version>
   </properties>
 
   <dependencyManagement>
@@ -137,6 +139,16 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-micrometer-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>dev.openfeature</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${openfeature.sdk.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.openfeature.contrib.providers</groupId>
+      <artifactId>flagd</artifactId>
+      <version>${openfeature.flagd.version}</version>
     </dependency>
   </dependencies>
 

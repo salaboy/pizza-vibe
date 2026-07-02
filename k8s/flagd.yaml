@@ -16,6 +16,16 @@ data:
             "off": false
           },
           "defaultVariant": "off"
+        },
+        "agent-chooser": {
+          "state": "ENABLED",
+          "variants": {
+            "v1": "v1",
+            "v2": "v2",
+            "v3": "v3",
+            "v4": "v4"
+          },
+          "defaultVariant": "v1"
         }
       }
     }
@@ -41,8 +51,6 @@ spec:
           image: ghcr.io/open-feature/flagd:latest
           args:
             - start
-            - -p
-            - "8013"
             - --uri
             - file:/etc/flagd/flags.json
           ports:
@@ -59,7 +67,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: flagd
+  name: flagd-service
   labels:
     app: flagd
 spec:

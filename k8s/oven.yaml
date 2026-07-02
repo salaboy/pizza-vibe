@@ -29,7 +29,7 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector-opentelemetry-collector.opentelemetry.svc.cluster.local:4317"
             - name: FLAGD_HOST
-              value: "flagd"
+              value: "flagd-service"
             - name: FLAGD_PORT
               value: "8013"
           livenessProbe:
